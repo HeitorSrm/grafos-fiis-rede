@@ -1,0 +1,8 @@
+yfinance
+pandas
+numpy
+networkx
+python-louvain
+scikit-learn
+matplotlib
+scipy
