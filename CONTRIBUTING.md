@@ -1,6 +1,6 @@
 # Como contribuir (Gitflow simplificado)
 
-Ninguém commita direto em `main`: ela é protegida e só recebe **Pull Request com 1 aprovação** de outro integrante. Por convenção, o trabalho novo entra em `develop` por PR, a partir de uma branch própria, e só depois vai para a `main`.
+Ninguém commita direto em `main`: ela é protegida e só recebe **Pull Request** (sem aprovação obrigatória). Por convenção, o trabalho novo entra em `develop` por PR, a partir de uma branch própria, e só depois vai para a `main`.
 
 ```
 feature/*  ──PR──▶  develop  ──PR──▶  main
@@ -9,7 +9,7 @@ hotfix/*   ──PR────────────────────�
 
 | Branch | Para quê | Quem entra nela |
 |---|---|---|
-| `main` | Versão estável / entrega (protegida) | só por PR (vindo de `develop`, ou `hotfix/*`), com 1 aprovação |
+| `main` | Versão estável / entrega (protegida) | só por PR (vindo de `develop`, ou `hotfix/*`) |
 | `develop` | Integração do trabalho em andamento | só PR vindo de `feature/*`, `fix/*`, `docs/*` |
 | `feature/<tema>` | Trabalho novo (ex.: `feature/camada-c-knn`) | quem está desenvolvendo |
 
@@ -20,7 +20,7 @@ hotfix/*   ──PR────────────────────�
 4. Envie: `git push -u origin feature/nome-curto`
 5. Abra um **Pull Request para `develop`** e peça revisão de 1 colega.
 6. Depois de aprovado, faça o merge e apague a branch.
-7. Na hora de fechar uma entrega, abra PR de `develop` para `main`; um colega revisa e aprova antes do merge.
+7. Na hora de fechar uma entrega, abra PR de `develop` para `main`; faça o merge pelo PR.
 
 ## Nomes de branch
 `feature/…` (novo), `fix/…` (correção), `docs/…` (relatório/documentação), `hotfix/…` (urgência direto para `main`).
