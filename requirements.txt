@@ -6,3 +6,4 @@ python-louvain
 scikit-learn
 matplotlib
 scipy
+openpyxl

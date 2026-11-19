@@ -60,6 +60,7 @@ indexador; o Yahoo não traz).
   comunidades (Louvain), centralidades, concordância com segmento (ARI),
   robustez
 - `main.py` — pipeline CRISP-NET (dados → modelagem → avaliação → figuras)
+- `frente4.py` — Frente 4 (descritiva, pontes, segmentos que andam juntos, carteiras, robustez) com os **dados reais**: `python src/frente4.py` (todos), `--top N` (N mais líquidos), `--dados-simulados` (40 FIIs de `data.py`) ou `--simular N` (teste de escala); saída em `out/frente4/<modo>/` (.csv, .tex e .png)
 - `out/` — figuras geradas
 
 ## Algoritmos de teoria dos grafos usados
