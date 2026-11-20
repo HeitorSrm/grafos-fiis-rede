@@ -85,7 +85,7 @@ A base de atributos usada pela Frente 2 é gerada por
 
 ### Documentação — `docs/`
 - `frente2-thresholds.md` — calibragem dos limiares, com as tabelas da varredura
-- `frente2-modelagem.md` — texto da seção de Modelagem, pronto para o Overleaf
+- `frente2-modelagem.tex` — seção de Modelagem em LaTeX, pronta para o Overleaf
 - `cronograma-frente2.md`, `roteiro.md`
 
 ## Algoritmos de teoria dos grafos usados
