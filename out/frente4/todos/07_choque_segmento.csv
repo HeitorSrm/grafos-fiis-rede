@@ -1,0 +1,17 @@
+grafo,segmento,fundos_removidos,arestas_perdidas,pct_arestas_perdidas,componentes_antes,componentes_depois,pct_maior_comp_depois
+MST,Fiagro,2,2,4.4,1,1,100.0
+MST,FoF,3,3,6.7,1,1,100.0
+MST,Hibrido,3,3,6.7,1,1,100.0
+MST,Lajes,6,7,15.6,1,2,95.0
+MST,Logistica,7,15,33.3,1,9,74.4
+MST,Papel,15,23,51.1,1,9,51.6
+MST,Renda Urbana,3,8,17.8,1,6,86.0
+MST,Shoppings,7,7,15.6,1,1,100.0
+Limiar ρ≥0.3,Fiagro,2,0,0.0,19,17,63.6
+Limiar ρ≥0.3,FoF,3,0,0.0,19,16,65.1
+Limiar ρ≥0.3,Hibrido,3,7,9.1,19,18,60.5
+Limiar ρ≥0.3,Lajes,6,8,10.4,19,14,67.5
+Limiar ρ≥0.3,Logistica,7,26,33.8,19,17,59.0
+Limiar ρ≥0.3,Papel,15,45,58.4,19,18,45.2
+Limiar ρ≥0.3,Renda Urbana,3,19,24.7,19,19,58.1
+Limiar ρ≥0.3,Shoppings,7,19,24.7,19,16,61.5
