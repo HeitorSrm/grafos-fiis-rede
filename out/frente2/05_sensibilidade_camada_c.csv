@@ -1,0 +1,6 @@
+configuracao,arestas,densidade,grau_medio,componentes,isolados,maior_componente_pct,comunidades,modularidade,ari_segmento
+k = 2,67,0.065,2.9,1,0,100,7,0.739,0.164
+k = 3,95,0.092,4.1,1,0,100,6,0.664,0.122
+k = 4,127,0.123,5.5,1,0,100,5,0.583,0.112
+k = 5,157,0.152,6.8,1,0,100,5,0.549,0.086
+k = 6,188,0.182,8.2,1,0,100,4,0.523,0.055
