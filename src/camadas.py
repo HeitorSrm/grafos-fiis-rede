@@ -230,9 +230,16 @@ def backbone_knn(G, k):
     H = nx.Graph()
     H.add_nodes_from(G.nodes(data=True))
     for n in G:
-        vizinhos = sorted(G[n].items(), key=lambda kv: -kv[1]["weight"])[:k]
-        for v, d in vizinhos:
-            H.add_edge(n, v, **d)
+        pesos = sorted((d["weight"] for d in G[n].values()), reverse=True)
+        if not pesos:
+            continue
+        # empates com a k-esima aresta tambem ficam: sem isso, entre fundos
+        # com o mesmo peso (ex.: so o segmento em comum) quem decidiria
+        # seria a ordem das linhas da planilha
+        corte = pesos[min(k, len(pesos)) - 1]
+        for v, d in G[n].items():
+            if d["weight"] >= corte - 1e-9:
+                H.add_edge(n, v, **d)
     return H
 
 

@@ -1,4 +1,4 @@
 configuracao,arestas,densidade,grau_medio,componentes,isolados,maior_componente_pct,comunidades,modularidade,ari_segmento
 com tipo_fundo (versão anterior),433,0.418,18.8,1,0,100,4,0.486,0.488
 sem tipo_fundo,233,0.225,10.1,1,0,100,6,0.555,0.857
-sem tipo_fundo + backbone k=3,98,0.095,4.3,1,0,100,6,0.656,0.452
+sem tipo_fundo + backbone k=3,191,0.185,8.3,1,0,100,6,0.6,0.857
