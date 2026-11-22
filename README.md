@@ -96,8 +96,11 @@ A base de atributos usada pela Frente 2 é gerada por
   (backbone kNN, MST ∪ limiar) e carregamento da base v2
 - `frente2.py` — **Frente 2**: análise de sensibilidade dos cinco limiares,
   tabelas e figuras → `out/frente2/`
-- `frente4.py` — **Frente 4**: descritiva, pontes, segmentos que andam juntos,
-  carteiras e robustez, sobre as camadas calibradas de `camadas.py` →
+- `frente4.py` — **Frente 4**: descritiva, pontes (com a estabilidade em
+  reamostragens), segmentos que andam juntos, carteiras de exemplo (contra
+  sorteadas de mesma composição), carteiras aparente × efetiva pela MST
+  (escolhidas em 2023, medidas em 2024) e robustez, sobre as camadas
+  calibradas de `camadas.py` →
   `out/frente4/<modo>/` (modos: padrão, `--top N`, `--dados-simulados`,
   `--simular N`)
 - `comunidades.py` — **Frente 3**: detecção de comunidades nas três camadas

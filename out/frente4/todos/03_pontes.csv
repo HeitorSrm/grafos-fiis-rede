@@ -1,11 +1,11 @@
-ticker,segmento,grau,grau_pond,intermediacao,intermediacao_mst,autovetor
-VRTA11,Papel,11,3.682,0.331,0.551,0.347
-SNCI11,Papel,9,3.243,0.312,0.694,0.345
-RECR11,Papel,9,2.92,0.302,0.426,0.155
-BTLG11,Logística,10,3.582,0.179,0.553,0.415
-HABT11,Papel,4,1.474,0.169,0.127,0.099
-TRXF11,Renda Urbana,9,2.998,0.15,0.088,0.324
-HGLG11,Logística,8,2.969,0.15,0.209,0.286
-HGRE11,Lajes,4,1.296,0.127,0.127,0.154
-HGRU11,Renda Urbana,3,1.055,0.101,0.087,0.069
-VILG11,Logística,3,0.854,0.088,0.088,0.023
+ticker,segmento,grau,grau_pond,intermediacao,intermediacao_mst,autovetor,freq_top10_reamostragem
+VRTA11,Papel,11,3.682,0.331,0.551,0.347,0.82
+SNCI11,Papel,9,3.243,0.312,0.694,0.345,0.69
+RECR11,Papel,9,2.92,0.302,0.426,0.155,0.79
+BTLG11,Logística,10,3.582,0.179,0.553,0.415,0.61
+HABT11,Papel,4,1.474,0.169,0.127,0.099,0.62
+TRXF11,Renda Urbana,9,2.998,0.15,0.088,0.324,0.62
+HGLG11,Logística,8,2.969,0.15,0.209,0.286,0.51
+HGRE11,Lajes,4,1.296,0.127,0.127,0.154,0.58
+HGRU11,Renda Urbana,3,1.055,0.101,0.087,0.069,0.21
+VILG11,Logística,3,0.854,0.088,0.088,0.023,0.18
