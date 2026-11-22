@@ -26,7 +26,6 @@ Uso (a partir da raiz do repositório):
 Saída: out/teste_sintetico/
 """
 import argparse
-import itertools
 import os
 import time
 
@@ -37,6 +36,8 @@ from sklearn.metrics import adjusted_rand_score as ari
 
 import camadas as cm
 import grafos as gr
+# regras de carteira: a mesma definição usada nos dados reais (frente4.py)
+from frente4 import carteiras_por_rede, carteiras_so_correlacao, rho_medio_carteira
 
 PASTA = os.path.join("out", "teste_sintetico")
 DIAS = 500                       # metade = período de escolha, metade = teste
@@ -141,39 +142,6 @@ def gerar_universo(cenario, seed):
     gabarito = {"pontes": pontes, "pares_ocultos": {frozenset(p) for p in PARES_OCULTOS},
                 "perfil": perfil}
     return atrib, cont, ret, gabarito
-
-
-# ---------------------------------------------------------------- carteiras
-
-def carteiras_por_rede(corr, seg):
-    """Uma carteira por regra, com 1 fundo por segmento, a partir da MST:
-    aparente = o mais central (maior intermediação) de cada segmento;
-    efetiva = o mais periférico (menor intermediação).
-    Desempate pela correlação média com o resto do mercado, para não
-    depender da ordem dos fundos."""
-    mst = gr.grafo_mst(corr)
-    btw = pd.Series(nx.betweenness_centrality(mst))
-    rho_medio = (corr.sum() - 1) / (len(corr) - 1)
-    aparente, efetiva = [], []
-    for s in sorted(seg.unique()):
-        f = seg.index[seg == s]
-        chave = pd.DataFrame({"btw": btw[f], "rho": rho_medio[f]})
-        aparente.append(chave.sort_values(["btw", "rho"], ascending=False).index[0])
-        efetiva.append(chave.sort_values(["btw", "rho"]).index[0])
-    return aparente, efetiva
-
-
-def carteiras_so_correlacao(corr, seg):
-    """Comparação sem grafo: maior e menor correlação média de cada segmento.
-    Mostra o quanto da regra da rede vem só da exposição ao mercado."""
-    rho_medio = (corr.sum() - 1) / (len(corr) - 1)
-    grupos = [rho_medio[seg.index[seg == s]] for s in sorted(seg.unique())]
-    return [g.idxmax() for g in grupos], [g.idxmin() for g in grupos]
-
-
-def rho_medio_carteira(corr, fundos):
-    sub = corr.loc[fundos, fundos].values
-    return sub[np.triu_indices(len(fundos), 1)].mean()
 
 
 # ---------------------------------------------------------------- avaliação
