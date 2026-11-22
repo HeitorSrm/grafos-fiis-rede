@@ -34,8 +34,8 @@ ENTRADA = os.path.join(PASTA, "atributos_fiis.xlsx")
 SAIDA = os.path.join(PASTA, "atributos_fiis_v2.xlsx")
 
 # Classificacao revisada dos 55 fundos da amostra.
-# Origem: dicionario SEGMENTO_ANALISE de src/frente4.py (Frente 4),
-# conferida fundo a fundo contra os relatorios gerenciais.
+# Origem: dicionario SEGMENTO_ANALISE da primeira versao de src/frente4.py
+# (Frente 4), que hoje le a classificacao desta base.
 SEGMENTOS = {
     "Logística": "HGLG11 XPLG11 BTLG11 LVBI11 VILG11 BRCO11 HSLG11 GGRC11 TRBL11",
     "Shoppings": "XPML11 VISC11 HSML11 HGBS11 CPSH11 FIGS11 FVPQ11 PQDP11",
