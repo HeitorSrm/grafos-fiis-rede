@@ -1,0 +1,10 @@
+metodo,camadas,ARI,NMI
+Girvan-Newman,A_backbone_k3 x B_MST_limiar_0.32,0.016,0.277
+Girvan-Newman,A_backbone_k3 x C_knn_k3,0.012,0.207
+Girvan-Newman,B_MST_limiar_0.32 x C_knn_k3,0.087,0.313
+Louvain,A_backbone_k3 x B_MST_limiar_0.32,0.081,0.284
+Louvain,A_backbone_k3 x C_knn_k3,0.035,0.279
+Louvain,B_MST_limiar_0.32 x C_knn_k3,0.095,0.248
+Leiden,A_backbone_k3 x B_MST_limiar_0.32,0.062,0.241
+Leiden,A_backbone_k3 x C_knn_k3,0.118,0.328
+Leiden,B_MST_limiar_0.32 x C_knn_k3,0.095,0.248
