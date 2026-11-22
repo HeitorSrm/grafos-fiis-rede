@@ -6,6 +6,10 @@ Perguntas:
   (c) quais pares de segmentos diferentes se movem juntos?
       (diversificação aparente x efetiva)
 
+Dados e camadas vêm de src/camadas.py (Frente 2): mesma base limpa e mesmos
+limiares do resto do projeto. A = Jaccard + backbone kNN, B = MST ∪ limiar,
+C = kNN.
+
 Uso (a partir da raiz do repositório):
     python src/frente4.py                    # dados reais   -> out/frente4/todos
     python src/frente4.py --top 30           # 30 mais líquidos -> out/frente4/top30
@@ -14,28 +18,18 @@ Uso (a partir da raiz do repositório):
 """
 import argparse
 import os
-import sys
 
 import numpy as np
 import pandas as pd
 import networkx as nx
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.lines import Line2D
 from matplotlib.patches import Patch
 
+import camadas as cm
 import data
 import grafos as gr
-
-# Limiar da Camada B. Com dados diários a correlação entre FIIs é baixa
-# (mediana ~0,19, máx ~0,48): com 0,5 o grafo fica vazio.
-# O valor final vem da Frente 2.
-RHO_MIN = 0.3
-K_KNN = 4          # vizinhos por nó na Camada C
-LIMIAR_A = 0.0     # peso mínimo de aresta na Camada A
-
-COBERTURA_MIN = 0.90   # fração mínima do período com cotação real
-ZEROS_MAX = 0.30       # fração máxima de dias com retorno exatamente zero
-REPETICAO_MAX = 4      # lista de inquilinos repetida em mais fundos = preenchimento padrão
 
 N_ROTULOS = 60     # acima disso as figuras mostram o segmento, não o fundo
 N_AMOSTRA = 300    # acima disso caminho, diâmetro e intermediação são amostrados
@@ -43,136 +37,23 @@ K_AMOSTRA = 100    # nº de vértices de origem na amostragem
 N_SORTEIOS = 30    # sorteios da remoção aleatória
 SEMENTE = 42
 
-PASTA_DADOS = os.path.join("docs", "1. Dados Reais", "Tabelas - Dados")
-ARQ_PRECOS = os.path.join(PASTA_DADOS, "precos_diarios_FIIs_1_excel.csv")
-ARQ_ATRIB = os.path.join(PASTA_DADOS, "atributos_fiis.xlsx")
+# cores dos segmentos reais (camadas.py) e dos simulados (data.py, sem acento)
+PALETA = {**cm.PALETA, "Logistica": "#2563eb", "Hibrido": "#64748b"}
 
-PALETA = {"Logistica": "#2563eb", "Shoppings": "#db2777", "Lajes": "#059669",
-          "Papel": "#d97706", "Renda Urbana": "#7c3aed", "FoF": "#0891b2",
-          "Hibrido": "#64748b", "Fiagro": "#65a30d", "Desenvolvimento": "#92400e"}
-
-# Segmento usado na análise. A planilha veio com quase tudo "Multicategoria",
-# MXRF11 como "Logística" e tipo_fundo "Tijolo" para todos.
-# TODO Frente 1: conferir esta classificação (a original fica em "segmento_planilha").
-SEGMENTO_ANALISE = {
-    "Logistica": "HGLG11 XPLG11 BTLG11 LVBI11 VILG11 BRCO11 HSLG11 GGRC11 TRBL11",
-    "Shoppings": "XPML11 VISC11 HSML11 HGBS11 CPSH11 FIGS11 FVPQ11 PQDP11",
-    "Lajes": "BRCR11 PVBI11 HGRE11 JSRE11 RCRB11 BROF11 VINO11 TEPP11",
-    "Renda Urbana": "TRXF11 RBVA11 HGRU11",
-    "Hibrido": "KNRI11 ALZR11 GARE11 RBRP11",
-    "Papel": "KNCR11 KNIP11 HGCR11 RECR11 CPTS11 MXRF11 KNSC11 RBRY11 PORD11 "
-             "HABT11 MCCI11 VRTA11 VGIR11 KCRE11 SNCI11 RBRR11 VSLH11",
-    "FoF": "HFOF11 KFOF11 BCIA11",
-    "Fiagro": "VGIA11 XPCA11",
-    "Desenvolvimento": "TGAR11",
-}
-SEGMENTO_DE = {t: s for s, lista in SEGMENTO_ANALISE.items() for t in lista.split()}
-CORRECOES_INQ = {"petrobas": "petrobras", "carregour": "carrefour"}
+NOME_A = f"A (Jaccard, backbone k={cm.K_BACKBONE_A})"
+NOME_B = f"B (MST ∪ ρ≥{cm.RHO_MIN_B})"
+NOME_MST = "B: só MST (referência)"
+NOME_C = f"C (kNN k={cm.K_KNN_C})"
 
 
-# ---------------------------------------------------------------- dados reais
-
-def carregar_precos():
-    """Separador ';', decimal ',' e data DD/MM/AAAA (o dicionário está errado)."""
-    px = pd.read_csv(ARQ_PRECOS, sep=";", decimal=",", index_col=0)
-    px.index = pd.to_datetime(px.index, dayfirst=True)
-    px.columns = [c.replace(".SA", "") for c in px.columns]
-    return px.sort_index()
-
-
-def limpar_precos(px):
-    """
-    A coleta fez ffill().bfill(): fundos sem histórico no início ganharam
-    meses de preço repetido (retorno zero), o que inventa correlação.
-    1) apaga esse trecho parado inicial;
-    2) remove fundos com cotação real em menos de 90% do período;
-    3) remove fundos com mais de 30% de dias com retorno zero.
-    """
-    px = px.copy()
-    for c in px.columns:
-        s = px[c]
-        mudou = (s != s.iloc[0]).values
-        inicio = mudou.argmax() if mudou.any() else len(s)
-        # o dia anterior à 1ª mudança é a 1ª cotação real; antes dele é cópia
-        if inicio > 1:
-            px.iloc[:inicio - 1, px.columns.get_loc(c)] = np.nan
-
-    cobertura = px.notna().mean()
-    ret = np.log(px).diff()
-    zeros = (ret == 0).sum() / ret.notna().sum()
-
-    saidas = []
-    for t in px.columns:
-        motivos = []
-        if cobertura[t] < COBERTURA_MIN:
-            motivos.append(f"cotação real em só {cobertura[t]:.0%} do período")
-        if zeros[t] > ZEROS_MAX:
-            motivos.append(f"{zeros[t]:.0%} dos dias com retorno zero")
-        if motivos:
-            saidas.append({"ticker": t, "cobertura": round(cobertura[t], 3),
-                           "frac_retorno_zero": round(zeros[t], 3),
-                           "motivo": "; ".join(motivos)})
-    removidos = pd.DataFrame(saidas, columns=["ticker", "cobertura",
-                                              "frac_retorno_zero", "motivo"])
-    return px.drop(columns=removidos["ticker"]), removidos
-
-
-def retornos_log(px):
-    """Retorno log diário, só nas datas em que todos os fundos têm cotação."""
-    return np.log(px).diff().dropna(how="any")
-
-
-def separa_inquilinos(texto):
-    """'A, B e C.' -> ['a', 'b', 'c']"""
-    texto = texto.strip().rstrip(".").lower().replace(" e ", ",")
-    nomes = [n.strip().rstrip(".") for n in texto.split(",")]
-    return [CORRECOES_INQ.get(n, n) for n in nomes if n]
-
-
-def carregar_atributos(tickers):
-    """Planilhas A e C no formato que o grafos.py espera.
-    Devolve também a liquidez em R$/dia (usada no --top)."""
-    A = pd.read_excel(ARQ_ATRIB, sheet_name="Planilha A").set_index("ticker").loc[tickers]
-    C = pd.read_excel(ARQ_ATRIB, sheet_name="Planilha C").set_index("ticker").loc[tickers]
-
-    atrib = pd.DataFrame(index=A.index)
-    atrib["segmento_planilha"] = A["segmento"]
-    atrib["segmento"] = [SEGMENTO_DE.get(t, "Outros") for t in A.index]
-    tipo = {"Papel": "Papel", "Fiagro": "Papel", "FoF": "FoF", "Hibrido": "Hibrido"}
-    atrib["tipo_fundo"] = atrib["segmento"].map(lambda s: tipo.get(s, "Tijolo"))
-    atrib["gestora"] = A["gestora"].str.strip()
-    atrib["indexador"] = "n/a"      # não coletado
-    atrib["tipo_imovel"] = "n/a"    # não coletado
-
-    # A mesma lista de inquilinos aparece em muitos fundos (ex.: ~20 de papel):
-    # é preenchimento padrão, então é ignorada.
-    texto = A["inquilinos"].fillna("").str.strip().str.lower()
-    repeticoes = texto.map(texto.value_counts())
-    atrib["inquilinos"] = [
-        [] if txt == "" or repeticoes[t] > REPETICAO_MAX else separa_inquilinos(txt)
-        for t, txt in texto.items()]
-
-    cont = pd.DataFrame(index=C.index)
-    cont["dividend_yield"] = C["dy_12m"].replace(0, np.nan)    # DY 0 = faltando
-    cont["pvp"] = C["p_vp"]
-    cont["vacancia"] = np.nan                                  # não coletada
-    # PL e liquidez vão de milhões a bilhões: log10 antes do z-score
-    cont["patrimonio_liquido"] = np.log10(C["patrimonio_liquido"])
-    cont["liquidez"] = np.log10(C["liquidez_diaria"])
-    # num_ativos = 0 em todo fundo de papel/FoF: é "não se aplica", não zero
-    cont["num_ativos"] = C["num_ativos"].replace(0, np.nan)
-    return atrib, cont.astype(float), C["liquidez_diaria"]
-
+# ---------------------------------------------------------------- dados
 
 def carregar_reais():
-    px, removidos = limpar_precos(carregar_precos())
-    print(f"[dados] {px.shape[1] + len(removidos)} FIIs no CSV, "
-          f"{len(removidos)} removidos na limpeza:")
+    """Base limpa da Frente 2; imprime quem saiu e por quê."""
+    atrib, cont, ret, removidos = cm.carregar_dados(verbose=True)
     for _, r in removidos.iterrows():
         print(f"   - {r['ticker']}: {r['motivo']}")
-    ret = retornos_log(px)
-    atrib, cont, liq = carregar_atributos(list(ret.columns))
-    return atrib, cont, ret, liq, removidos
+    return atrib, cont, ret, removidos
 
 
 def gerar_universo_sintetico(n, dias=500, seed=SEMENTE):
@@ -188,19 +69,25 @@ def gerar_universo_sintetico(n, dias=500, seed=SEMENTE):
     for i in range(n):
         t, s = f"SIM{i:04d}", segs[i % len(segs)]
         tijolo = s not in ("Papel", "FoF")
-        linhas.append({"ticker": t, "segmento": s, "indexador": "n/a",
-                       "gestora": rng.choice(gestoras),
-                       "tipo_fundo": data.TIPO_FUNDO[s], "tipo_imovel": "n/a",
+        linhas.append({"ticker": t, "segmento": s, "gestora": rng.choice(gestoras),
                        "inquilinos": list(rng.choice(empresas, 2, replace=False))
                        if tijolo else []})
         cont[t] = dict(dividend_yield=rng.uniform(7, 15), pvp=rng.uniform(0.5, 1.1),
-                       vacancia=np.nan, patrimonio_liquido=rng.uniform(8, 10),
-                       liquidez=rng.uniform(5, 7.5),
+                       patrimonio_liquido=rng.uniform(8, 10), liquidez=rng.uniform(5, 7.5),
                        num_ativos=float(rng.integers(1, 40)) if tijolo else np.nan)
         ret[t] = (rng.uniform(0.6, 1.0) * f_mkt + rng.uniform(0.7, 1.1) * f_seg[s]
                   + rng.normal(0, 0.008, dias))
     atrib = pd.DataFrame(linhas).set_index("ticker")
     return atrib, pd.DataFrame(cont).T.astype(float), pd.DataFrame(ret)
+
+
+def montar_camadas(atrib, cont, ret):
+    """As três camadas calibradas (camadas.py)."""
+    GA_completo, GA = cm.camada_a(atrib)
+    corr = gr.matriz_correlacao(ret)
+    GB, MST, _ = cm.camada_b(corr)
+    GC = cm.camada_c(cont)
+    return GA_completo, GA, corr, GB, MST, GC
 
 
 # ---------------------------------------------------------------- utilidades
@@ -209,9 +96,9 @@ def salva_tabela(df, pasta, nome, index=True):
     """.csv para o grupo e .tex para o relatório."""
     df.to_csv(os.path.join(pasta, nome + ".csv"), index=index)
     try:
-        # escape=True protege _ & % do LaTeX; ρ e ≥ viram comandos de matemática
+        # escape=True protege _ & % do LaTeX; ρ, ≥ e ∪ viram comandos de matemática
         tex = df.to_latex(index=index, float_format="%.3f", na_rep="--", escape=True)
-        tex = tex.replace("ρ", r"$\rho$").replace("≥", r"$\geq$")
+        tex = tex.replace("ρ", r"$\rho$").replace("≥", r"$\geq$").replace("∪", r"$\cup$")
         with open(os.path.join(pasta, nome + ".tex"), "w", encoding="utf-8") as f:
             f.write(tex)
     except ImportError:
@@ -231,6 +118,11 @@ def rotulo(t, atrib):
 
 def cor(t, atrib):
     return PALETA.get(atrib.loc[t, "segmento"], "#999999")
+
+
+def legenda(ax, segmentos, extra=(), **kw):
+    handles = [Patch(color=PALETA.get(s, "#999"), label=s) for s in segmentos]
+    ax.legend(handles=handles + list(extra), fontsize=8, **kw)
 
 
 # ---------------------------------------------------------------- 01/02 descritiva
@@ -306,22 +198,24 @@ def centralidades_f4(G):
     return cent.sort_values("intermediacao", ascending=False)
 
 
-def tabela_pontes(MST, cent, atrib, pasta, top=10):
-    """Maior intermediação = fundo que está no meio dos caminhos entre grupos."""
+def tabela_pontes(GB, MST, atrib, pasta, top=10):
+    """Maior intermediação na Camada B = fundo que está no meio dos caminhos
+    entre grupos. A coluna da MST mostra se o ranking depende da construção."""
+    cent = centralidades_f4(GB)
     t = cent.head(top).copy()
     t["segmento"] = atrib.loc[t.index, "segmento"]
-    t["grau"] = [MST.degree(v) for v in t.index]
-    t = t[["segmento", "grau", "grau_pond", "intermediacao", "autovetor"]].round(3)
+    t["grau"] = [GB.degree(v) for v in t.index]
+    t["intermediacao_mst"] = centralidades_f4(MST)["intermediacao"].reindex(t.index)
+    t = t[["segmento", "grau", "grau_pond", "intermediacao", "intermediacao_mst",
+           "autovetor"]].round(3)
     t.index.name = "ticker"
     salva_tabela(t, pasta, "03_pontes")
 
     fig, ax = plt.subplots(figsize=(7, 4.5))
     ax.barh([rotulo(v, atrib) for v in t.index][::-1], t["intermediacao"][::-1],
             color=[cor(v, atrib) for v in t.index][::-1])
-    segs = list(dict.fromkeys(t["segmento"]))
-    ax.legend(handles=[Patch(color=PALETA.get(s, "#999"), label=s) for s in segs],
-              fontsize=8, loc="lower right")
-    ax.set_xlabel("intermediação na MST")
+    legenda(ax, list(dict.fromkeys(t["segmento"])), loc="lower right")
+    ax.set_xlabel(f"intermediação na Camada B (MST ∪ ρ≥{cm.RHO_MIN_B})")
     ax.set_title(f"Top-{top} pontes da rede de co-movimento", weight="bold")
     salva_figura(pasta, "03_pontes.png")
     return t
@@ -389,23 +283,24 @@ def correlacao_segmentos(corr, atrib, pasta):
     return tab
 
 
-def pares_cruzados(corr, atrib, GA, pasta, top=15):
-    """Pares de segmentos diferentes com maior ρ. peso_A = 0 quer dizer que os
-    fundos não têm nada em comum na Camada A, mas andam juntos no preço:
-    é a diversificação aparente."""
+def pares_cruzados(corr, atrib, GA_completo, pasta, top=15):
+    """Pares de segmentos diferentes com maior ρ. peso_A é o Jaccard da
+    Camada A (0 a 1); peso_A = 0 quer dizer que os fundos não têm nada em
+    comum, mas andam juntos no preço: é a diversificação aparente."""
     seg = atrib["segmento"]
+    itens = cm.itens_de(atrib)
     nomes = list(corr.index)
     linhas = []
     for i, a in enumerate(nomes):
         for b in nomes[i + 1:]:
             if seg[a] == seg[b]:
                 continue
-            aresta = GA.get_edge_data(a, b, default={})
+            aresta = GA_completo.get_edge_data(a, b, default={})
             linhas.append({"fundo_1": a, "segmento_1": seg[a],
                            "fundo_2": b, "segmento_2": seg[b],
                            "rho": corr.loc[a, b],
                            "peso_A": aresta.get("weight", 0.0),
-                           "em_comum_A": ", ".join(aresta.get("compartilham", []))})
+                           "em_comum_A": ", ".join(sorted(itens[a] & itens[b]))})
     t = (pd.DataFrame(linhas).sort_values("rho", ascending=False)
          .head(top).reset_index(drop=True).round(3))
     t.index += 1
@@ -416,6 +311,9 @@ def pares_cruzados(corr, atrib, GA, pasta, top=15):
 # ---------------------------------------------------------------- 06 carteiras
 
 def avalia_carteiras(corr, atrib, cont, MST, part, pasta):
+    # gr.avalia_carteira lê a vacância, que não foi coletada nos dados reais
+    if "vacancia" not in cont:
+        cont = cont.assign(vacancia=np.nan)
     resultado = {}
     for nome, fundos in [("Carteira ideal", data.CARTEIRA_IDEAL),
                          ("Falsa diversificada", data.CARTEIRA_FALSA)]:
@@ -432,6 +330,8 @@ def avalia_carteiras(corr, atrib, cont, MST, part, pasta):
     if not resultado:
         return None
     tab = pd.DataFrame(resultado)
+    if tab.loc["vacancia_media"].isna().all():
+        tab = tab.drop(index="vacancia_media")
     salva_tabela(tab, pasta, "06_carteiras")
     return tab
 
@@ -509,41 +409,49 @@ def choque_segmento(grafos_b, atrib, pasta):
 
 # ---------------------------------------------------------------- 08 figuras dos grafos
 
-def desenha_grafo(G, atrib, titulo, pasta, nome, pos, destaque=()):
-    """Cor = segmento, espessura = peso da aresta, contorno preto = destaque."""
+def desenha_grafo(G, atrib, titulo, pasta, nome, pos, destaque=(), tracejadas=()):
+    """Cor = segmento, espessura = peso da aresta, contorno preto = destaque,
+    tracejado = aresta só da MST."""
     fig, ax = plt.subplots(figsize=(10, 8))
-    pesos = np.array([d.get("weight", 1.0) for *_, d in G.edges(data=True)])
+    cheias = [e for e in G.edges() if frozenset(e) not in tracejadas]
+    pesos = np.array([G.edges[e].get("weight", 1.0) for e in cheias])
     if len(pesos):
         larg = 0.4 + 2.5 * (pesos - pesos.min()) / (np.ptp(pesos) + 1e-9)
-        nx.draw_networkx_edges(G, pos, ax=ax, alpha=0.35, width=larg)
+        nx.draw_networkx_edges(G, pos, edgelist=cheias, ax=ax, alpha=0.35, width=larg)
+    if tracejadas:
+        nx.draw_networkx_edges(G, pos, edgelist=[tuple(e) for e in tracejadas], ax=ax,
+                               style="dashed", alpha=0.5, width=0.8, edge_color="#94a3b8")
     nx.draw_networkx_nodes(G, pos, ax=ax, node_size=260 if len(G) <= N_ROTULOS else 30,
                            node_color=[cor(v, atrib) for v in G],
                            edgecolors=["black" if v in destaque else "white" for v in G],
-                           linewidths=[2.8 if v in destaque else 0.8 for v in G])
+                           linewidths=[2.0 if v in destaque else 0.8 for v in G])
     if len(G) <= N_ROTULOS:
         nx.draw_networkx_labels(G, pos, ax=ax, font_size=6.5)
-    segs = sorted(atrib.loc[list(G), "segmento"].unique())
-    ax.legend(handles=[Patch(color=PALETA.get(s, "#999"), label=s) for s in segs],
-              fontsize=8, loc="best")
+    extra = [Line2D([0], [0], color="#94a3b8", ls="--", label="aresta só da MST")] \
+        if tracejadas else []
+    legenda(ax, sorted(atrib.loc[list(G), "segmento"].unique()), extra, loc="best")
     ax.set_title(titulo, weight="bold")
     ax.axis("off")
     salva_figura(pasta, nome)
 
 
-def figuras_grafos(GA, MST, GC, atrib, pasta):
-    """As 3 camadas e as carteiras destacadas na MST."""
-    posB = nx.kamada_kawai_layout(MST, weight=None)   # árvore fica bem espalhada
-    desenha_grafo(GA, atrib, "Camada A — características em comum (peso por raridade)",
-                  pasta, "08_grafo_A.png", nx.spring_layout(GA, seed=3, k=0.6))
-    desenha_grafo(MST, atrib, "Camada B — MST de co-movimento dos preços",
-                  pasta, "08_grafo_B_mst.png", posB)
-    desenha_grafo(GC, atrib, f"Camada C — perfil fundamentalista (kNN, k={K_KNN})",
-                  pasta, "08_grafo_C.png", nx.spring_layout(GC, seed=3, k=0.6))
+def figuras_grafos(GA, GB, MST, GC, atrib, pasta):
+    """As 3 camadas e as carteiras destacadas na MST. Layout de Kamada-Kawai
+    pela distância em saltos (não depende da escala dos pesos)."""
+    lay = lambda G: nx.kamada_kawai_layout(G, weight=None)
+    so_mst = {frozenset((a, b)) for a, b, d in GB.edges(data=True) if d["origem"] == "mst"}
+    desenha_grafo(GA, atrib, f"Camada A — características em comum (Jaccard, k={cm.K_BACKBONE_A})",
+                  pasta, "08_grafo_A.png", lay(GA))
+    desenha_grafo(GB, atrib, f"Camada B — co-movimento (MST ∪ ρ ≥ {cm.RHO_MIN_B})",
+                  pasta, "08_grafo_B.png", lay(GB), tracejadas=so_mst)
+    desenha_grafo(GC, atrib, f"Camada C — perfil fundamentalista (kNN, k={cm.K_KNN_C})",
+                  pasta, "08_grafo_C.png", lay(GC))
+    posM = lay(MST)
     for nome, fundos in [("ideal", data.CARTEIRA_IDEAL), ("falsa", data.CARTEIRA_FALSA)]:
         presentes = set(fundos) & set(MST)
         if len(presentes) >= 2:
             desenha_grafo(MST, atrib, f"Carteira {nome} destacada na MST", pasta,
-                          f"09_carteira_{nome}.png", posB, destaque=presentes)
+                          f"09_carteira_{nome}.png", posM, destaque=presentes)
 
 
 # ---------------------------------------------------------------- execução
@@ -569,10 +477,11 @@ def carregar(args):
         atrib, cont, ret = data.carregar_tudo_simulado()
         modo = "simulado_dados"
     else:
-        atrib, cont, ret, liq, removidos = carregar_reais()
+        atrib, cont, ret, removidos = carregar_reais()
         modo = "todos"
         if args.top:
-            top = liq.sort_values(ascending=False).head(args.top).index
+            # liquidez está em log10, então a ordem é a mesma da liquidez em R$
+            top = cont["liquidez"].sort_values(ascending=False).head(args.top).index
             atrib, cont, ret = atrib.loc[top], cont.loc[top], ret[top]
             modo = f"top{args.top}"
 
@@ -590,48 +499,38 @@ def main():
     atrib, cont, ret, pasta = carregar(args)
     print(f"[frente4] {len(atrib)} fundos | {len(ret)} dias | saída em {pasta}/")
 
-    GA = gr.grafo_estrutural(atrib, limiar=LIMIAR_A)
-    corr = gr.matriz_correlacao(ret)
-    MST = gr.grafo_mst(corr)
-    GL = gr.grafo_limiar(corr, rho_min=RHO_MIN)
-    GC = gr.grafo_fundamentalista(cont, k=K_KNN)
-    if GL.number_of_edges() == 0:
-        maior = corr.values[np.triu_indices(len(corr), k=1)].max()
-        sys.exit(f"ERRO: com RHO_MIN={RHO_MIN} o grafo por limiar ficou sem arestas "
-                 f"(maior ρ = {maior:.2f}). Diminua RHO_MIN em src/frente4.py.")
-
-    camadas = {"A (estrutural)": GA, "B (MST)": MST,
-               f"B (limiar ρ≥{RHO_MIN})": GL, f"C (kNN k={K_KNN})": GC}
-    grafos_b = {"MST": MST, f"Limiar ρ≥{RHO_MIN}": GL}
+    GA_completo, GA, corr, GB, MST, GC = montar_camadas(atrib, cont, ret)
+    camadas = {NOME_A: GA, NOME_B: GB, NOME_MST: MST, NOME_C: GC}
 
     print("\n[01] descritiva por camada")
     print(tabela_descritiva(camadas, pasta).to_string())
     figura_graus(camadas, pasta)
 
-    print("\n[03] pontes (intermediação na MST)")
-    print(tabela_pontes(MST, centralidades_f4(MST), atrib, pasta).to_string())
+    print("\n[03] pontes (intermediação na Camada B)")
+    print(tabela_pontes(GB, MST, atrib, pasta).to_string())
 
     figura_matriz_correlacao(corr, atrib, pasta)
 
     print("\n[05] correlação média segmento × segmento")
     print(correlacao_segmentos(corr, atrib, pasta).to_string())
     print("\n[05] pares de segmentos diferentes com maior ρ")
-    print(pares_cruzados(corr, atrib, GA, pasta).drop(columns="em_comum_A").to_string())
+    print(pares_cruzados(corr, atrib, GA_completo, pasta).drop(columns="em_comum_A").to_string())
 
     print("\n[06] carteiras")
-    part, mod = gr.comunidades(GL)
-    print(f"   Louvain no grafo por limiar: {len(set(part.values()))} comunidades, "
+    part, mod = gr.comunidades(GB)
+    print(f"   Louvain na Camada B: {len(set(part.values()))} comunidades, "
           f"modularidade {mod:.3f}")
     tab = avalia_carteiras(corr, atrib, cont, MST, part, pasta)
     if tab is not None:
         print(tab.to_string())
 
     print("\n[07] robustez e choque de segmento")
+    grafos_b = {"MST": MST, f"MST ∪ ρ≥{cm.RHO_MIN_B}": GB}
     figura_robustez(grafos_b, pasta)
     print(choque_segmento(grafos_b, atrib, pasta).to_string(index=False))
 
     print("\n[08] figuras dos grafos")
-    figuras_grafos(GA, MST, GC, atrib, pasta)
+    figuras_grafos(GA, GB, MST, GC, atrib, pasta)
 
     print(f"\n[ok] tudo salvo em {pasta}/")
 

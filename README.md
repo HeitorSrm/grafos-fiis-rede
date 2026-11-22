@@ -81,7 +81,9 @@ A base de atributos usada pela Frente 2 é gerada por
 - `frente2.py` — **Frente 2**: análise de sensibilidade dos cinco limiares,
   tabelas e figuras → `out/frente2/`
 - `frente4.py` — **Frente 4**: descritiva, pontes, segmentos que andam juntos,
-  carteiras e robustez → `out/frente4/<modo>/`
+  carteiras e robustez, sobre as camadas calibradas de `camadas.py` →
+  `out/frente4/<modo>/` (modos: padrão, `--top N`, `--dados-simulados`,
+  `--simular N`)
 - `gera_base_v2.py` — gera `atributos_fiis_v2.xlsx`
 - `data.py`, `main.py` — protótipo inicial com dados simulados
 

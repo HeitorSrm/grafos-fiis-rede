@@ -1,47 +1,47 @@
-ticker,segmento_planilha,segmento,tipo_fundo,gestora,indexador,tipo_imovel,inquilinos
-ALZR11,Multicategoria,Hibrido,Hibrido,Allianza Gestão de Recursos,n/a,n/a,"globo, santillana, mercado livre, claranet"
-BCIA11,Multicategoria,FoF,FoF,Bradesco Asset Management,n/a,n/a,"cotas de outros fiis listados na bolsa (como os próprios hglg11, kncr11, xpml11, pvbi11)"
-BRCO11,Logística,Logistica,Tijolo,Bresco Gestão,n/a,n/a,"natura, mercado livre, carrefour, fedex"
-BRCR11,Multicategoria,Lajes,Tijolo,BTG Pactual,n/a,n/a,"petrobras, volkswagen, enel, tim, banco do brasil"
-BTLG11,Multicategoria,Logistica,Tijolo,BTG Pactual,n/a,n/a,"assaí, ambev, natura, braskem, dhl, amazon, itambé"
-FIGS11,Shoppings,Shoppings,Tijolo,Hedge Investments,n/a,n/a,
-FVPQ11,Shoppings,Shoppings,Tijolo,Hedge Investments,n/a,n/a,
-GGRC11,Multicategoria,Logistica,Tijolo,Zagros Capital,n/a,n/a,"renault, ambev, americanas, hering"
-HABT11,Multicategoria,Papel,Papel,XP Asset / XP Vista,n/a,n/a,
-HFOF11,Multicategoria,FoF,FoF,Hedge Investments,n/a,n/a,"cotas de outros fiis listados na bolsa (como os próprios hglg11, kncr11, xpml11, pvbi11)"
-HGBS11,Shoppings,Shoppings,Tijolo,Hedge Investments,n/a,n/a,
-HGCR11,Outros,Papel,Papel,Pátria Investimentos,n/a,n/a,
-HGLG11,Multicategoria,Logistica,Tijolo,Pátria Investimentos,n/a,n/a,"mercado livre, volkswagen, electrolux"
-HGRE11,Escritórios,Lajes,Tijolo,Pátria Investimentos,n/a,n/a,"totvs, claro, enel, cielo"
-HGRU11,Outros,Renda Urbana,Tijolo,Pátria Investimentos,n/a,n/a,"pernambucanas, sam's clube, mineirão atacadista"
-HSML11,Shoppings,Shoppings,Tijolo,HSI,n/a,n/a,
-JSRE11,Multicategoria,Lajes,Tijolo,Safra Asset,n/a,n/a,"banco safra, johnson & johnson, accor, allianz"
-KCRE11,Multicategoria,Papel,Papel,Kinea Investimentos,n/a,n/a,
-KFOF11,Multicategoria,FoF,FoF,Kinea Investimentos,n/a,n/a,"cotas de outros fiis listados na bolsa (como os próprios hglg11, kncr11, xpml11, pvbi11)"
-KNCR11,Multicategoria,Papel,Papel,Kinea Investimentos,n/a,n/a,
-KNIP11,Multicategoria,Papel,Papel,Kinea Investimentos,n/a,n/a,
-KNRI11,Multicategoria,Hibrido,Hibrido,Kinea Investimentos,n/a,n/a,"itaú unibanco, santander, magazine luiza, ibmec"
-KNSC11,Multicategoria,Papel,Papel,Kinea Investimentos,n/a,n/a,
-LVBI11,Logística,Logistica,Tijolo,Pátria Investimentos,n/a,n/a,"mercado livre, amazon, ambev, dhl, magazine luiza"
-MCCI11,Multicategoria,Papel,Papel,JiveMauá (Mauá Capital),n/a,n/a,
-MXRF11,Logística,Papel,Papel,XP Asset / XP Vista,n/a,n/a,
-PORD11,Multicategoria,Papel,Papel,Polo Capital,n/a,n/a,
-PQDP11,Shoppings,Shoppings,Tijolo,BTG Pactual,n/a,n/a,
-RBRP11,Outros,Hibrido,Hibrido,RBR Asset,n/a,n/a,"amazon, enel, prevent senior, americanas"
-RBRR11,Multicategoria,Papel,Papel,RBR Asset,n/a,n/a,"brookfield, helbor, rni, iguatemi"
-RBRY11,Multicategoria,Papel,Papel,RBR Asset,n/a,n/a,
-RBVA11,Varejo,Renda Urbana,Tijolo,Rio Bravo Investimentos,n/a,n/a,"santander, caixa econômica federal, pernambucanas, renner"
-RCRB11,Escritórios,Lajes,Tijolo,Rio Bravo Investimentos,n/a,n/a,"amazon, b2w, enel, gpa"
-RECR11,Multicategoria,Papel,Papel,REC Gestão de Recursos,n/a,n/a,
-SNCI11,Outros,Papel,Papel,Suno Asset,n/a,n/a,
-TEPP11,Multicategoria,Lajes,Tijolo,Capitânia Investimentos,n/a,n/a,"renner, klabin, b3, porto seguro"
-TRXF11,Multicategoria,Renda Urbana,Tijolo,TRX Investimentos,n/a,n/a,"assaí, pão de açúcar, carrefour, leroy merlin"
-VGIA11,Outros,Fiagro,Papel,Valora Investimentos,n/a,n/a,"cras (certificado de recebíveis do agronegócio) de produtores rurais, empresas como minerva, jalles machado, lavoro"
-VGIR11,Multicategoria,Papel,Papel,Valora Investimentos,n/a,n/a,
-VILG11,Logística,Logistica,Tijolo,Vinci Compass,n/a,n/a,"tok&stok, privalia, ambev, mercado livre"
-VINO11,Multicategoria,Lajes,Tijolo,Vinci Compass,n/a,n/a,"wework, vitacon, globo, renner"
-VISC11,Shoppings,Shoppings,Tijolo,Vinci Compass,n/a,n/a,
-VRTA11,Outros,Papel,Papel,Fator de Administração de Recursos,n/a,n/a,
-XPCA11,Multicategoria,Fiagro,Papel,XP Asset / XP Vista,n/a,n/a,"cras (certificado de recebíveis do agronegócio) de produtores rurais, empresas como minerva, jalles machado, lavoro"
-XPLG11,Logística,Logistica,Tijolo,XP Asset / XP Vista,n/a,n/a,"mobly, grupo vip, ec, mercado livre"
-XPML11,Shoppings,Shoppings,Tijolo,XP Asset / XP Vista,n/a,n/a,
+ticker,segmento,segmento_planilha,gestora,inquilinos
+ALZR11,Híbrido,Multicategoria,Allianza Gestão de Recursos,"globo, santillana, mercado livre, claranet"
+BCIA11,FoF,Multicategoria,Bradesco Asset Management,
+BRCO11,Logística,Logística,Bresco Gestão,"natura, mercado livre, carrefour, fedex"
+BRCR11,Lajes,Multicategoria,BTG Pactual,"petrobras, volkswagen, enel, tim, banco do brasil"
+BTLG11,Logística,Multicategoria,BTG Pactual,"assaí, ambev, natura, braskem, dhl, amazon, itambé"
+FIGS11,Shoppings,Shoppings,Hedge Investments,
+FVPQ11,Shoppings,Shoppings,Hedge Investments,
+GGRC11,Logística,Multicategoria,Zagros Capital,"renault, ambev, americanas, hering"
+HABT11,Papel,Multicategoria,XP Asset / XP Vista,
+HFOF11,FoF,Multicategoria,Hedge Investments,
+HGBS11,Shoppings,Shoppings,Hedge Investments,
+HGCR11,Papel,Outros,Pátria Investimentos,
+HGLG11,Logística,Multicategoria,Pátria Investimentos,"mercado livre, volkswagen, electrolux"
+HGRE11,Lajes,Escritórios,Pátria Investimentos,"totvs, claro, enel, cielo"
+HGRU11,Renda Urbana,Outros,Pátria Investimentos,"pernambucanas, sam's clube, mineirão atacadista"
+HSML11,Shoppings,Shoppings,HSI,
+JSRE11,Lajes,Multicategoria,Safra Asset,"banco safra, johnson & johnson, accor, allianz"
+KCRE11,Papel,Multicategoria,Kinea Investimentos,
+KFOF11,FoF,Multicategoria,Kinea Investimentos,
+KNCR11,Papel,Multicategoria,Kinea Investimentos,
+KNIP11,Papel,Multicategoria,Kinea Investimentos,
+KNRI11,Híbrido,Multicategoria,Kinea Investimentos,"itaú unibanco, santander, magazine luiza, ibmec"
+KNSC11,Papel,Multicategoria,Kinea Investimentos,
+LVBI11,Logística,Logística,Pátria Investimentos,"mercado livre, amazon, ambev, dhl, magazine luiza"
+MCCI11,Papel,Multicategoria,JiveMauá (Mauá Capital),
+MXRF11,Papel,Logística,XP Asset / XP Vista,
+PORD11,Papel,Multicategoria,Polo Capital,
+PQDP11,Shoppings,Shoppings,BTG Pactual,
+RBRP11,Híbrido,Outros,RBR Asset,"amazon, enel, prevent senior, americanas"
+RBRR11,Papel,Multicategoria,RBR Asset,
+RBRY11,Papel,Multicategoria,RBR Asset,
+RBVA11,Renda Urbana,Varejo,Rio Bravo Investimentos,"santander, caixa econômica federal, pernambucanas, renner"
+RCRB11,Lajes,Escritórios,Rio Bravo Investimentos,"amazon, b2w, enel, gpa"
+RECR11,Papel,Multicategoria,REC Gestão de Recursos,
+SNCI11,Papel,Outros,Suno Asset,
+TEPP11,Lajes,Multicategoria,Capitânia Investimentos,"renner, klabin, b3, porto seguro"
+TRXF11,Renda Urbana,Multicategoria,TRX Investimentos,"assaí, pão de açúcar, carrefour, leroy merlin"
+VGIA11,Fiagro,Outros,Valora Investimentos,
+VGIR11,Papel,Multicategoria,Valora Investimentos,
+VILG11,Logística,Logística,Vinci Compass,"tok&stok, privalia, ambev, mercado livre"
+VINO11,Lajes,Multicategoria,Vinci Compass,"wework, vitacon, globo, renner"
+VISC11,Shoppings,Shoppings,Vinci Compass,
+VRTA11,Papel,Outros,Fator de Administração de Recursos,
+XPCA11,Fiagro,Multicategoria,XP Asset / XP Vista,
+XPLG11,Logística,Logística,XP Asset / XP Vista,"mobly, grupo vip, ec, mercado livre"
+XPML11,Shoppings,Shoppings,XP Asset / XP Vista,
