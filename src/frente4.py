@@ -419,7 +419,8 @@ def desenha_grafo(G, atrib, titulo, pasta, nome, pos, destaque=(), tracejadas=()
         larg = 0.4 + 2.5 * (pesos - pesos.min()) / (np.ptp(pesos) + 1e-9)
         nx.draw_networkx_edges(G, pos, edgelist=cheias, ax=ax, alpha=0.35, width=larg)
     if tracejadas:
-        nx.draw_networkx_edges(G, pos, edgelist=[tuple(e) for e in tracejadas], ax=ax,
+        # ordenado: a ordem de um set muda a cada execução e mudaria a figura
+        nx.draw_networkx_edges(G, pos, edgelist=sorted(tuple(sorted(e)) for e in tracejadas), ax=ax,
                                style="dashed", alpha=0.5, width=0.8, edge_color="#94a3b8")
     nx.draw_networkx_nodes(G, pos, ax=ax, node_size=260 if len(G) <= N_ROTULOS else 30,
                            node_color=[cor(v, atrib) for v in G],
@@ -456,13 +457,23 @@ def figuras_grafos(GA, GB, MST, GC, atrib, pasta):
 
 # ---------------------------------------------------------------- execução
 
+def inteiro_minimo(valor):
+    """N precisa ser >= 3: com menos fundos não há rede para analisar
+    (e --top 0 seria lido como "sem --top", sobrescrevendo a pasta todos/)."""
+    n = int(valor)
+    if n < 3:
+        raise argparse.ArgumentTypeError("use um N de pelo menos 3")
+    return n
+
+
 def argumentos():
     p = argparse.ArgumentParser(description="Frente 4: centralidades e carteiras")
     g = p.add_mutually_exclusive_group()
-    g.add_argument("--top", type=int, metavar="N", help="só os N FIIs mais líquidos")
+    g.add_argument("--top", type=inteiro_minimo, metavar="N",
+                   help="só os N FIIs mais líquidos")
     g.add_argument("--dados-simulados", action="store_true",
                    help="os 40 FIIs simulados de data.py")
-    g.add_argument("--simular", type=int, metavar="N",
+    g.add_argument("--simular", type=inteiro_minimo, metavar="N",
                    help="universo sintético de N fundos (teste de escala)")
     return p.parse_args()
 
@@ -479,7 +490,10 @@ def carregar(args):
     else:
         atrib, cont, ret, removidos = carregar_reais()
         modo = "todos"
-        if args.top:
+        if args.top is not None:
+            if args.top > len(atrib):
+                print(f"   [aviso] só há {len(atrib)} fundos; usando --top {len(atrib)}")
+                args.top = len(atrib)
             # liquidez está em log10, então a ordem é a mesma da liquidez em R$
             top = cont["liquidez"].sort_values(ascending=False).head(args.top).index
             atrib, cont, ret = atrib.loc[top], cont.loc[top], ret[top]

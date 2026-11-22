@@ -1,10 +1,10 @@
 """
 Frente 2 — modelagem formal das tres camadas e limiares calibrados.
 
-Este modulo e a versao 2 da construcao dos grafos. Ele nao substitui
-`src/grafos.py` nem `src/frente4.py`, que ficam como estao: reaproveita as
-funcoes de `grafos.py` onde elas servem e redefine so o que a calibragem
-mudou.
+Este modulo e a versao 2 da construcao dos grafos e a fonte unica das
+camadas usadas pelo projeto (frente2.py e frente4.py importam daqui).
+Reaproveita as funcoes de `grafos.py` onde elas servem e redefine so o que a
+calibragem mudou.
 
 Cinco limiares, todos justificados em docs/frente2-thresholds.md:
 
