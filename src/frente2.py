@@ -280,6 +280,36 @@ def diagnostico_limitacoes(corr, ret, cont):
                         ).set_index(["tema", "medida"])
 
 
+N_EXECUCOES = 200   # sementes do Louvain na medida de estabilidade do ARI
+
+
+def estabilidade_ari(grafos, atrib):
+    """
+    O Louvain é estocástico: cada semente pode dar uma partição diferente.
+    A tabela 06 usa uma semente só (a de gr.comunidades); aqui o Louvain roda
+    com N_EXECUCOES sementes em cada camada, para mostrar o valor típico do
+    ARI com o segmento e o quanto ele varia. A coluna da semente única é a
+    mesma da tabela 06.
+    """
+    import community as community_louvain
+    linhas = []
+    for nome, G in grafos.items():
+        unica, _ = gr.comunidades(G)
+        aris, qs = [], []
+        for s in range(N_EXECUCOES):
+            part = community_louvain.best_partition(G, weight="weight", random_state=s)
+            aris.append(gr.concorda_com_segmento(part, atrib))
+            qs.append(community_louvain.modularity(part, G, weight="weight"))
+        linhas.append({"camada": nome,
+                       "ari_semente_unica": round(gr.concorda_com_segmento(unica, atrib), 3),
+                       f"ari_media_{N_EXECUCOES}": round(float(np.mean(aris)), 3),
+                       "ari_desvio": round(float(np.std(aris)), 3),
+                       "ari_min": round(float(np.min(aris)), 3),
+                       "ari_max": round(float(np.max(aris)), 3),
+                       "modularidade_media": round(float(np.mean(qs)), 3)})
+    return pd.DataFrame(linhas).set_index("camada")
+
+
 def _cores(G, atrib):
     return [cam.PALETA.get(atrib.loc[n, "segmento"], "#94a3b8") for n in G]
 
@@ -394,6 +424,10 @@ def main():
     ]).set_index("limiar")
     salva_tabela(escolhidos, "07_limiares_escolhidos")
     salva_tabela(diagnostico_limitacoes(corr, ret, cont), "09_diagnostico_limitacoes")
+
+    estab = estabilidade_ari({"A": GA, "B": GB, "C": GC}, atrib)
+    salva_tabela(estab, "10_estabilidade_ari")
+    print(f"\n   ARI com o segmento em {N_EXECUCOES} execuções do Louvain:\n" + estab.to_string())
 
     so_mst = {(a, b) for a, b, d in GB.edges(data=True) if d["origem"] == "mst"}
     desenha(GA, atrib, f"Camada A — estrutural, backbone k={cam.K_BACKBONE_A}",
