@@ -60,12 +60,22 @@ Classificação revisada fundo a fundo, a partir dos relatórios gerenciais.
 
 ### Observação sobre `inquilinos`
 
-O campo permanece como foi coletado, mas o tratamento na análise mudou: a
-mesma lista de locatários aparece copiada em cerca de vinte fundos de papel e
-de fundos de fundos, que por definição não têm locatários. Listas idênticas
-repetidas em mais de quatro fundos são tratadas como preenchimento padrão e
-ignoradas na construção do grafo. Após esse filtro, 21 dos 46 fundos
-analisados ficam com lista vazia.
+O campo permanece como foi coletado; o tratamento é feito na análise
+(`src/camadas.py`). Ele contém três tipos de conteúdo:
+
+- **locatários específicos do fundo**, nos fundos de tijolo — é o dado usado;
+- **listas genéricas por segmento**: os mesmos 11 devedores de CRI em 16
+  fundos de papel e os mesmos lojistas em 8 fundos de shopping. Os nomes são
+  reais, mas não são específicos de cada fundo;
+- **descrições do lastro**, não nomes: "cotas de outros FIIs listados…" em
+  3 FoFs e "CRAs de produtores rurais…" em 2 Fiagros.
+
+Regras da análise: inquilino só é considerado para fundos de tijolo
+(Logística, Shoppings, Lajes, Renda Urbana e Híbrido), porque Papel, FoF e
+Fiagro não têm locatário; e listas idênticas repetidas em mais de quatro
+fundos são ignoradas por serem genéricas. Entre os 46 fundos analisados,
+19 ficam com inquilinos e 27 com lista vazia (20 que não são de tijolo e os
+7 shoppings).
 
 ## Campos previstos e não coletados
 

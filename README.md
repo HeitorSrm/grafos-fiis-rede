@@ -11,11 +11,11 @@ Amostra: 46 FIIs, 497 pregões (02/01/2023 a 30/12/2024), dados reais da B3.
 
 | Camada | O que captura | Como é construída |
 |---|---|---|
-| **A — Estrutural** | similaridade de *características declaradas* | projeção bipartida FII×característica, peso = soma do `idf` dos itens compartilhados → *backbone* kNN |
+| **A — Estrutural** | similaridade de *características declaradas* | projeção bipartida FII×característica, peso = Jaccard ponderado pelo `idf` (fração do perfil compartilhada) → *backbone* kNN |
 | **B — Comportamental** | *co-movimento* de preços | retorno log → correlação de Pearson → distância `d=√(2(1−ρ))` → **MST de Mantegna ∪ grafo por limiar** |
 | **C — Fundamentalista** | similaridade de *perfil financeiro* | vetor contínuo padronizado (z-score) → distância euclidiana → similaridade `1/(1+d)` → grafo kNN |
 
-**Atributos da Camada A:** segmento, gestora, inquilinos.
+**Atributos da Camada A:** segmento, gestora, inquilinos (só fundos de tijolo).
 **Indicadores da Camada C:** DY 12m, P/VP, patrimônio líquido, liquidez
 diária, nº de ativos.
 
@@ -33,7 +33,7 @@ justificativa em [`docs/frente2-thresholds.md`](docs/frente2-thresholds.md).
 |---|---|---|---|
 | `COBERTURA_MIN` | 0,90 | dados | cotação real em 90% do período |
 | `ZEROS_MAX` | 0,30 | dados | acima disso o preço está travado por iliquidez |
-| `K_BACKBONE_A` | 3 | A | menor k que mantém A e C conexas |
+| `K_BACKBONE_A` | 3 | A | menor k que deixa A e C com grau médio acima de 3 |
 | `RHO_MIN_B` | 0,32 | B | percentil 95 da correlação entre pares |
 | `K_KNN_C` | 3 | C | mesmo critério da Camada A |
 
@@ -41,14 +41,16 @@ Grafos resultantes:
 
 | Camada | Arestas | Densidade | Grau médio | Componentes | Comunidades | Modularidade | ARI com segmento |
 |---|---|---|---|---|---|---|---|
-| A — backbone k=3 | 98 | 0,095 | 4,3 | 1 | 6 | 0,656 | 0,452 |
+| A — Jaccard + backbone k=3 | 122 | 0,118 | 5,3 | 1 | 6 | 0,574 | 0,519 |
 | B — MST ∪ ρ ≥ 0,32 | 68 | 0,066 | 3,0 | 1 | 5 | 0,422 | 0,210 |
 | C — kNN k=3 | 95 | 0,092 | 4,1 | 1 | 6 | 0,664 | 0,122 |
 
 As três ficam conexas, sem fundos isolados e com densidade comparável, para
 que a comparação entre camadas reflita estrutura e não calibragem. Os três
 valores distintos de ARI mostram que elas captam coisas diferentes: a Camada A
-reconstrói o setor, a B o acompanha parcialmente e a C é quase ortogonal a ele.
+segue o setor em boa parte (o resto é gestora e inquilino em comum), a B o
+acompanha parcialmente e a C é quase ortogonal a ele. O ARI é validação, não
+objetivo: o segmento é entrada da Camada A.
 
 ## Rodando
 
@@ -85,6 +87,8 @@ A base de atributos usada pela Frente 2 é gerada por
 
 ### Documentação — `docs/`
 - `frente2-thresholds.md` — calibragem dos limiares, com as tabelas da varredura
+- `frente2-camada-a.md` — decisões da Camada A (inquilinos, peso Jaccard,
+  backbone com empates), com os testes de cada uma
 - `frente2-modelagem.tex` — seção de Modelagem em LaTeX, pronta para o Overleaf
 - `cronograma-frente2.md`, `roteiro.md`
 

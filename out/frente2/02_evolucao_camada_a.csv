@@ -1,0 +1,5 @@
+configuracao,arestas,pesos_distintos,densidade,grau_medio,componentes,isolados,maior_componente_pct,comunidades,modularidade,ari_segmento
+"1. com tipo_fundo, soma do idf",433,27,0.418,18.8,1,0,100,3,0.455,0.558
+"2. sem tipo_fundo, soma do idf",233,20,0.225,10.1,1,0,100,4,0.513,0.724
+"3. sem tipo_fundo, Jaccard ponderado",233,114,0.225,10.1,1,0,100,4,0.474,0.428
+4. Jaccard + backbone k=3 (final),122,61,0.118,5.3,1,0,100,6,0.574,0.519
