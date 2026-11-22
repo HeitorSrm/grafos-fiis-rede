@@ -57,9 +57,10 @@ objetivo: o segmento é entrada da Camada A.
 ```bash
 pip install -r requirements.txt
 
-python src/frente2.py    # sensibilidade dos limiares + camadas calibradas
-python src/frente4.py    # centralidades, pontes, segmentos e carteiras
-python src/main.py       # protótipo inicial, com dados simulados
+python src/frente2.py      # sensibilidade dos limiares + camadas calibradas
+python src/comunidades.py  # comunidades nas 3 camadas (3 algoritmos)
+python src/frente4.py      # centralidades, pontes, segmentos e carteiras
+python src/main.py         # protótipo inicial, com dados simulados
 ```
 
 A base de atributos usada pela Frente 2 é gerada por
@@ -84,11 +85,19 @@ A base de atributos usada pela Frente 2 é gerada por
   carteiras e robustez, sobre as camadas calibradas de `camadas.py` →
   `out/frente4/<modo>/` (modos: padrão, `--top N`, `--dados-simulados`,
   `--simular N`)
+- `comunidades.py` — **Frente 3**: detecção de comunidades nas três camadas
+  com Girvan-Newman, Louvain e Leiden; compara os três entre si, com o
+  segmento e entre camadas → `out/comunidades/`
+- `visual_comunidades.py` — **Frente 3**: comparação visual das partições
+  (`--salvar` grava os PNGs sem abrir janela)
+- `louvain.py`, `leiden.py`, `girvan-newmann.py` — **Frente 3**:
+  pseudocódigo comentado dos três algoritmos
 - `gera_base_v2.py` — gera `atributos_fiis_v2.xlsx`
 - `data.py`, `main.py` — protótipo inicial com dados simulados
 
 ### Documentação — `docs/`
-- `frente2-thresholds.md` — calibragem dos limiares, tabelas da varredura e limitações a declarar
+- `frente2-thresholds.md` — calibragem dos limiares, tabelas da varredura e
+  limitações a declarar (números em `out/frente2/09_diagnostico_limitacoes.csv`)
 - `frente2-camada-a.md` — decisões da Camada A (inquilinos, peso Jaccard,
   backbone com empates), com os testes de cada uma
 - `frente2-modelagem.tex` — seção de Modelagem em LaTeX, pronta para o Overleaf
@@ -98,7 +107,8 @@ A base de atributos usada pela Frente 2 é gerada por
 
 Projeção de grafo bipartido · extração de *backbone* por vizinhança ·
 árvore geradora mínima (Kruskal/Prim via `networkx`) · grafo por limiar ·
-k-vizinhos mais próximos · detecção de comunidades (modularidade / Louvain) ·
+k-vizinhos mais próximos · detecção de comunidades (Girvan-Newman, Louvain e
+Leiden; modularidade) ·
 centralidades (grau ponderado, intermediação, autovetor) · componentes
 conexos · caminho mínimo e diâmetro · análise de robustez por remoção de
 vértices.
