@@ -61,7 +61,16 @@ python src/frente2.py      # sensibilidade dos limiares + camadas calibradas
 python src/comunidades.py  # comunidades nas 3 camadas (3 algoritmos)
 python src/frente4.py      # centralidades, pontes, segmentos e carteiras
 python src/main.py         # protótipo inicial, com dados simulados
+
+# validação
+python src/teste_sintetico.py   # 500 fundos sintéticos de estrutura conhecida
+python src/analise_ampliada.py  # base real ampliada (156 FIIs) x base de 46
 ```
+
+A base ampliada já está versionada em `dados/ampliado/`. Para coletá-la de
+novo: `python src/coleta_ampliada.py universo`, depois `precos --parte N`
+(N de 1 a 5, uma parte por pessoa, para dividir o limite do Yahoo) e
+`juntar`.
 
 A base de atributos usada pela Frente 2 é gerada por
 `python src/gera_base_v2.py` e já está versionada.
@@ -73,6 +82,12 @@ A base de atributos usada pela Frente 2 é gerada por
 - `Tabelas - Dados/atributos_fiis.xlsx` — atributos como coletados (v1)
 - `Tabelas - Dados/atributos_fiis_v2.xlsx` — v2, com o `segmento` reclassificado
 - `Dicionário/dicionario.md` e `Dicionário/dicionario_v2.md`
+
+### Dados ampliados — `dados/ampliado/`
+- `universo.csv` — os 379 FIIs negociados, com segmento (e a origem dele:
+  revisado na base v2, CVM ou Fundamentus) e indicadores
+- `precos.csv` — cotações diárias 2023–2024, no formato da base da Frente 1;
+  156 fundos passam na limpeza do projeto
 
 ### Código — `src/`
 - `grafos.py` — núcleo algorítmico: projeção bipartida, MST, limiar, kNN,
@@ -92,6 +107,15 @@ A base de atributos usada pela Frente 2 é gerada por
   (`--salvar` grava os PNGs sem abrir janela)
 - `louvain.py`, `leiden.py`, `girvan-newmann.py` — **Frente 3**:
   pseudocódigo comentado dos três algoritmos
+- `teste_sintetico.py` — **validação**: 500 fundos sintéticos com segmentos,
+  pontes, pares de diversificação aparente e perfis plantados; verifica se o
+  pipeline os recupera, em três cenários (forte, realista e com mudança de
+  regime) → `out/teste_sintetico/`
+- `coleta_ampliada.py` — **validação**: coleta de todos os FIIs negociados
+  (Fundamentus + CVM + Yahoo), em 5 partes → `dados/ampliado/`
+- `analise_ampliada.py` — **validação**: Camadas B e C, pontes, pares
+  cruzados e carteiras na base ampliada, lado a lado com a base de 46 →
+  `out/ampliada/`
 - `gera_base_v2.py` — gera `atributos_fiis_v2.xlsx`
 - `data.py`, `main.py` — protótipo inicial com dados simulados
 
