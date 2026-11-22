@@ -22,17 +22,12 @@ import pandas as pd
 from sklearn.metrics import adjusted_rand_score as ari
 
 import camadas as cm
-import frente4 as f4
+import frente4 as f4     # regras de carteira, limiar p95 e estabilidade das pontes
 import grafos as gr
-import teste_sintetico as ts
 
 PASTA = os.path.join("out", "ampliada")
 ARQ_PRECOS = os.path.join("dados", "ampliado", "precos.csv")
 ARQ_UNIVERSO = os.path.join("dados", "ampliado", "universo.csv")
-MIN_FUNDOS_SEGMENTO = 3      # segmentos menores ficam fora das carteiras
-N_BOOT = 100                 # reamostragens dos pregões para as pontes
-N_ACASO = 2000               # carteiras sorteadas
-SEMENTE = 42
 PONTES_BASE = ["RECR11", "VRTA11", "SNCI11"]   # pontes mais recorrentes na base de 46
 
 
@@ -72,21 +67,12 @@ def k_camada_c(cont):
     return k, G
 
 
-def camada_b_p95(ret):
-    """Limiar = p95 da correlação arredondado a 2 casas, como na Frente 2
-    (na base de 46: 0,315 -> 0,32, o valor oficial)."""
-    corr = ret.corr()
-    p95 = round(float(np.quantile(corr.values[np.triu_indices(len(corr), 1)], 0.95)), 2)
-    GB, MST, _ = cm.camada_b(corr, rho_min=p95)
-    return corr, p95, GB, MST
-
-
 # ---------------------------------------------------------------- análises
 
 def resumo_base(nome, atrib, cont, ret):
     """Uma coluna da tabela de comparação entre as bases."""
     seg = atrib["segmento"]
-    corr, p95, GB, MST = camada_b_p95(ret)
+    corr, p95, GB, MST = f4.camada_b_p95(ret)
     k, GC = k_camada_c(cont)
     iu = np.triu_indices(len(corr), 1)
     part, q = gr.comunidades(GB)
@@ -108,54 +94,6 @@ def resumo_base(nome, atrib, cont, ret):
     return pd.Series(linha, name=nome), corr, GB, MST, GC
 
 
-def estabilidade_pontes(ret, atrib):
-    """Frequência no top-10 da intermediação em reamostragens dos pregões
-    (blocos de 5 dias, para preservar a dependência de curto prazo)."""
-    rng = np.random.default_rng(SEMENTE)
-    blocos = [ret.iloc[i:i + 5] for i in range(0, len(ret), 5)]
-    cont = pd.Series(0, index=ret.columns)
-    for _ in range(N_BOOT):
-        r = pd.concat([blocos[i] for i in rng.integers(0, len(blocos), len(blocos))])
-        _, _, GB, _ = camada_b_p95(r)
-        btw = pd.Series(nx.betweenness_centrality(GB)).sort_values(ascending=False)
-        cont[btw.index[:10]] += 1
-    t = (cont / N_BOOT).sort_values(ascending=False).head(15).rename("freq_top10").to_frame()
-    t.insert(0, "segmento", atrib.loc[t.index, "segmento"])
-    return t
-
-
-def carteiras(ret, seg, nome):
-    """Escolha com o 1º período, medida no 2º; só segmentos com
-    MIN_FUNDOS_SEGMENTO fundos ou mais."""
-    grandes = seg.value_counts()
-    seg = seg[seg.isin(grandes[grandes >= MIN_FUNDOS_SEGMENTO].index)]
-    r = ret[seg.index]
-    meio = len(r) // 2
-    c1, c2 = r.iloc[:meio].corr(), r.iloc[meio:].corr()
-    ap, ef = ts.carteiras_por_rede(c1, seg)
-    ap_rho, ef_rho = ts.carteiras_so_correlacao(c1, seg)
-    rng = np.random.default_rng(SEMENTE)
-    grupos = [seg.index[seg == s] for s in sorted(seg.unique())]
-    acaso = np.array([ts.rho_medio_carteira(c2, [rng.choice(g) for g in grupos])
-                      for _ in range(N_ACASO)])
-    rho = lambda f: ts.rho_medio_carteira(c2, f)
-    linhas = {
-        "rede: aparente (mais central na MST)": ap,
-        "só correlação: maior ρ médio": ap_rho,
-        "rede: efetiva (mais periférico na MST)": ef,
-        "só correlação: menor ρ médio": ef_rho,
-    }
-    tab = pd.DataFrame([{"regra": k, "rho_2o_periodo": rho(v),
-                         "pct_sorteadas_com_rho_menor": 100 * (acaso < rho(v)).mean(),
-                         "fundos": " ".join(v)} for k, v in linhas.items()])
-    tab.loc[len(tab)] = {"regra": f"ao acaso (média de {N_ACASO})", "rho_2o_periodo": acaso.mean(),
-                         "pct_sorteadas_com_rho_menor": 50.0, "fundos": ""}
-    tab.insert(0, "base", nome)
-    tab["segmentos"] = len(grupos)
-    tab["inicio_2o_periodo"] = str(r.index[meio].date())
-    return tab
-
-
 # ---------------------------------------------------------------- execução
 
 def main():
@@ -172,9 +110,11 @@ def main():
 
     print("\n[02] pontes na base ampliada (Camada B)")
     print(f4.tabela_pontes(GB, MST, aA, PASTA).to_string())
-    est = estabilidade_pontes(rA, aA)
+    est = (f4.estabilidade_pontes(rA).sort_values(ascending=False).head(15)
+           .rename("freq_top10").to_frame())
+    est.insert(0, "segmento", aA.loc[est.index, "segmento"])
     f4.salva_tabela(est, PASTA, "02_pontes_estabilidade")
-    print(f"\n   frequência no top-10 em {N_BOOT} reamostragens\n" + est.to_string())
+    print(f"\n   frequência no top-10 em {f4.N_BOOT} reamostragens\n" + est.to_string())
 
     print("\n[03] correlação segmento × segmento e pares cruzados")
     print(f4.correlacao_segmentos(corrA, aA, PASTA).to_string())
@@ -189,8 +129,9 @@ def main():
     f4.figura_matriz_correlacao(corrA, aA, PASTA)
 
     print("\n[04] carteiras: escolha no 1º período, medida no 2º")
-    cart = pd.concat([carteiras(r46, a46["segmento"], "base 46"),
-                      carteiras(rA, aA["segmento"], "ampliada")], ignore_index=True).round(3)
+    cart = pd.concat([f4.carteiras_fora_da_amostra(r46, a46["segmento"], "base 46")[0],
+                      f4.carteiras_fora_da_amostra(rA, aA["segmento"], "ampliada")[0]],
+                     ignore_index=True).round(3)
     f4.salva_tabela(cart, PASTA, "04_carteiras", index=False)
     print(cart.drop(columns="fundos").to_string(index=False))
 

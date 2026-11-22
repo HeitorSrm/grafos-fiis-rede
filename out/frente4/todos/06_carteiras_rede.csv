@@ -1,0 +1,6 @@
+base,regra,rho_2o_periodo,pct_sorteadas_com_rho_menor,fundos,segmentos,inicio_2o_periodo
+base,rede: aparente (mais central na MST),0.323,88.45,KFOF11 KNRI11 HGRE11 XPLG11 RBRR11 HGRU11 HSML11,7,2024-01-04
+base,só correlação: maior ρ médio,0.295,72.9,KFOF11 KNRI11 HGRE11 VILG11 RECR11 HGRU11 FIGS11,7,2024-01-04
+base,rede: efetiva (mais periférico na MST),0.158,0.45,BCIA11 RBRP11 RCRB11 BRCO11 KCRE11 RBVA11 PQDP11,7,2024-01-04
+base,só correlação: menor ρ médio,0.183,3.7,BCIA11 RBRP11 RCRB11 HGLG11 KCRE11 RBVA11 PQDP11,7,2024-01-04
+base,ao acaso (média de 2000),0.267,50.0,,7,2024-01-04

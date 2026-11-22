@@ -78,7 +78,8 @@ def gerar_universo_sintetico(n, dias=500, seed=SEMENTE):
         ret[t] = (rng.uniform(0.6, 1.0) * f_mkt + rng.uniform(0.7, 1.1) * f_seg[s]
                   + rng.normal(0, 0.008, dias))
     atrib = pd.DataFrame(linhas).set_index("ticker")
-    return atrib, pd.DataFrame(cont).T.astype(float), pd.DataFrame(ret)
+    ret = pd.DataFrame(ret, index=pd.bdate_range("2023-01-02", periods=dias))  # dias úteis
+    return atrib, pd.DataFrame(cont).T.astype(float), ret
 
 
 def montar_camadas(atrib, cont, ret):
@@ -198,16 +199,47 @@ def centralidades_f4(G):
     return cent.sort_values("intermediacao", ascending=False)
 
 
-def tabela_pontes(GB, MST, atrib, pasta, top=10):
+N_BOOT = 100   # reamostragens dos pregões para a estabilidade das pontes
+
+
+def camada_b_p95(ret):
+    """Camada B com o limiar recalculado para a amostra: p95 da correlação
+    arredondado a 2 casas, a regra da Frente 2 (na base de 46: 0,32)."""
+    corr = ret.corr()
+    p95 = round(float(np.quantile(corr.values[np.triu_indices(len(corr), 1)], 0.95)), 2)
+    GB, MST, _ = cm.camada_b(corr, rho_min=p95)
+    return corr, p95, GB, MST
+
+
+def estabilidade_pontes(ret):
+    """Frequência de cada fundo no top-10 da intermediação em N_BOOT
+    reamostragens dos pregões (blocos de 5 dias, para preservar a dependência
+    de curto prazo). Mede o quanto o ranking de pontes é estável."""
+    rng = np.random.default_rng(SEMENTE)
+    blocos = [ret.iloc[i:i + 5] for i in range(0, len(ret), 5)]
+    vezes = pd.Series(0, index=ret.columns)
+    for _ in range(N_BOOT):
+        r = pd.concat([blocos[i] for i in rng.integers(0, len(blocos), len(blocos))])
+        _, _, GB, _ = camada_b_p95(r)
+        btw = pd.Series(nx.betweenness_centrality(GB)).sort_values(ascending=False)
+        vezes[btw.index[:10]] += 1
+    return vezes / N_BOOT
+
+
+def tabela_pontes(GB, MST, atrib, pasta, top=10, freq_top10=None):
     """Maior intermediação na Camada B = fundo que está no meio dos caminhos
-    entre grupos. A coluna da MST mostra se o ranking depende da construção."""
+    entre grupos. A coluna da MST mostra se o ranking depende da construção;
+    freq_top10, se dada, mostra a estabilidade em reamostragens."""
     cent = centralidades_f4(GB)
     t = cent.head(top).copy()
     t["segmento"] = atrib.loc[t.index, "segmento"]
     t["grau"] = [GB.degree(v) for v in t.index]
     t["intermediacao_mst"] = centralidades_f4(MST)["intermediacao"].reindex(t.index)
-    t = t[["segmento", "grau", "grau_pond", "intermediacao", "intermediacao_mst",
-           "autovetor"]].round(3)
+    colunas = ["segmento", "grau", "grau_pond", "intermediacao", "intermediacao_mst", "autovetor"]
+    if freq_top10 is not None:
+        t["freq_top10_reamostragem"] = freq_top10.reindex(t.index)
+        colunas.append("freq_top10_reamostragem")
+    t = t[colunas].round(3)
     t.index.name = "ticker"
     salva_tabela(t, pasta, "03_pontes")
 
@@ -310,13 +342,37 @@ def pares_cruzados(corr, atrib, GA_completo, pasta, top=15):
 
 # ---------------------------------------------------------------- 06 carteiras
 
-def avalia_carteiras(corr, atrib, cont, MST, part, pasta):
-    # gr.avalia_carteira lê a vacância, que não foi coletada nos dados reais
-    if "vacancia" not in cont:
-        cont = cont.assign(vacancia=np.nan)
+# carteiras de exemplo do data.py, com nomes que dizem o que elas são: a
+# "referência" pega o fundo líder de cada segmento, e isso já é
+# diversificação aparente (é mais correlacionada que carteiras sorteadas)
+CARTEIRAS_EXEMPLO = [("Referência (líderes por segmento)", data.CARTEIRA_IDEAL),
+                     ("Concentrada (só Logística e Shoppings)", data.CARTEIRA_FALSA)]
+N_ACASO = 2000                 # carteiras sorteadas para comparação
+MIN_FUNDOS_SEGMENTO = 3        # segmentos menores ficam fora das carteiras da rede
+
+
+def rho_medio_carteira(corr, fundos):
+    sub = corr.loc[fundos, fundos].values
+    return sub[np.triu_indices(len(fundos), 1)].mean()
+
+
+def sorteia_mesma_composicao(corr, seg, fundos, n, rng):
+    """ρ médio de n carteiras sorteadas com a mesma quantidade de fundos de
+    cada segmento que a carteira dada."""
+    cota = seg[fundos].value_counts()
+    return np.array([rho_medio_carteira(corr, [f for s, k in cota.items()
+                                              for f in rng.choice(seg.index[seg == s], k, replace=False)])
+                     for _ in range(n)])
+
+
+def avalia_carteiras(corr, atrib, MST, pasta):
+    """Carteiras de exemplo: ρ médio, distância na MST e a posição da carteira
+    entre as sorteadas com a mesma composição de segmentos (percentil alto =
+    mais correlacionada que o acaso, ou seja, diversificação aparente)."""
+    seg = atrib["segmento"]
+    rng = np.random.default_rng(SEMENTE)
     resultado = {}
-    for nome, fundos in [("Carteira ideal", data.CARTEIRA_IDEAL),
-                         ("Falsa diversificada", data.CARTEIRA_FALSA)]:
+    for nome, fundos in CARTEIRAS_EXEMPLO:
         presentes = [f for f in fundos if f in corr.index]
         faltam = [f for f in fundos if f not in corr.index]
         if faltam:
@@ -324,16 +380,103 @@ def avalia_carteiras(corr, atrib, cont, MST, part, pasta):
         if len(presentes) < 2:
             print(f"   [aviso] {nome}: menos de 2 fundos no universo, pulada")
             continue
-        m = gr.avalia_carteira(presentes, corr, atrib, cont, MST, part)
-        m["fundos"] = " ".join(presentes)
-        resultado[nome] = m
+        rho = rho_medio_carteira(corr, presentes)
+        acaso = sorteia_mesma_composicao(corr, seg, presentes, N_ACASO, rng)
+        dist = [nx.shortest_path_length(MST, a, b, weight="distance")
+                for i, a in enumerate(presentes) for b in presentes[i + 1:]]
+        resultado[nome] = {"n_fundos": len(presentes), "n_segmentos": seg[presentes].nunique(),
+                           "corr_media": round(rho, 3), "dist_media_mst": round(float(np.mean(dist)), 3),
+                           "rho_medio_sorteadas": round(float(acaso.mean()), 3),
+                           "pct_sorteadas_com_rho_menor": round(100 * float((acaso < rho).mean()), 1),
+                           "fundos": " ".join(presentes)}
     if not resultado:
         return None
     tab = pd.DataFrame(resultado)
-    if tab.loc["vacancia_media"].isna().all():
-        tab = tab.drop(index="vacancia_media")
     salva_tabela(tab, pasta, "06_carteiras")
     return tab
+
+
+def carteiras_por_rede(corr, seg):
+    """Uma carteira por regra, com 1 fundo por segmento, a partir da MST:
+    aparente = o mais central (maior intermediação) de cada segmento;
+    efetiva = o mais periférico (menor intermediação).
+    Desempate pela correlação média com o resto do mercado, para não
+    depender da ordem dos fundos."""
+    mst = gr.grafo_mst(corr)
+    btw = pd.Series(nx.betweenness_centrality(mst))
+    rho_medio = (corr.sum() - 1) / (len(corr) - 1)
+    aparente, efetiva = [], []
+    for s in sorted(seg.unique()):
+        f = seg.index[seg == s]
+        chave = pd.DataFrame({"btw": btw[f], "rho": rho_medio[f]})
+        aparente.append(chave.sort_values(["btw", "rho"], ascending=False).index[0])
+        efetiva.append(chave.sort_values(["btw", "rho"]).index[0])
+    return aparente, efetiva
+
+
+def carteiras_so_correlacao(corr, seg):
+    """Comparação sem grafo: maior e menor correlação média de cada segmento.
+    Mostra o quanto da regra da rede vem só da exposição ao mercado."""
+    rho_medio = (corr.sum() - 1) / (len(corr) - 1)
+    grupos = [rho_medio[seg.index[seg == s]] for s in sorted(seg.unique())]
+    return [g.idxmax() for g in grupos], [g.idxmin() for g in grupos]
+
+
+def carteiras_fora_da_amostra(ret, seg, nome):
+    """Escolhe as carteiras com a 1ª metade dos pregões e mede o ρ médio na
+    2ª metade (fora da amostra). Só segmentos com MIN_FUNDOS_SEGMENTO fundos
+    ou mais. Devolve a tabela e os ρ das carteiras sorteadas."""
+    grandes = seg.value_counts()
+    seg = seg[seg.isin(grandes[grandes >= MIN_FUNDOS_SEGMENTO].index)]
+    if seg.nunique() < 2:
+        print(f"   [aviso] menos de 2 segmentos com {MIN_FUNDOS_SEGMENTO}+ fundos: carteiras pela rede puladas")
+        return None, None
+    r = ret[seg.index]
+    meio = len(r) // 2
+    c1, c2 = r.iloc[:meio].corr(), r.iloc[meio:].corr()
+    ap, ef = carteiras_por_rede(c1, seg)
+    ap_rho, ef_rho = carteiras_so_correlacao(c1, seg)
+    rng = np.random.default_rng(SEMENTE)
+    grupos = [seg.index[seg == s] for s in sorted(seg.unique())]
+    acaso = np.array([rho_medio_carteira(c2, [rng.choice(g) for g in grupos])
+                      for _ in range(N_ACASO)])
+    rho = lambda f: rho_medio_carteira(c2, f)
+    linhas = {
+        "rede: aparente (mais central na MST)": ap,
+        "só correlação: maior ρ médio": ap_rho,
+        "rede: efetiva (mais periférico na MST)": ef,
+        "só correlação: menor ρ médio": ef_rho,
+    }
+    tab = pd.DataFrame([{"regra": k, "rho_2o_periodo": rho(v),
+                         "pct_sorteadas_com_rho_menor": 100 * (acaso < rho(v)).mean(),
+                         "fundos": " ".join(v)} for k, v in linhas.items()])
+    tab.loc[len(tab)] = {"regra": f"ao acaso (média de {N_ACASO})", "rho_2o_periodo": acaso.mean(),
+                         "pct_sorteadas_com_rho_menor": 50.0, "fundos": ""}
+    tab.insert(0, "base", nome)
+    tab["segmentos"] = len(grupos)
+    tab["inicio_2o_periodo"] = str(r.index[meio].date())
+    return tab, acaso
+
+
+def figura_carteiras_rede(tab, acaso, pasta):
+    """Distribuição das carteiras sorteadas, com as regras marcadas."""
+    fig, ax = plt.subplots(figsize=(8, 4.2))
+    ax.hist(acaso, bins=40, color="#cbd5e1", edgecolor="white",
+            label=f"{N_ACASO} carteiras sorteadas (1 fundo por segmento)")
+    estilos = {"rede: aparente (mais central na MST)": ("#be123c", "-"),
+               "só correlação: maior ρ médio": ("#be123c", ":"),
+               "rede: efetiva (mais periférico na MST)": ("#059669", "-"),
+               "só correlação: menor ρ médio": ("#059669", ":")}
+    for _, r in tab.iterrows():
+        if r["regra"] in estilos:
+            c, ls = estilos[r["regra"]]
+            ax.axvline(r["rho_2o_periodo"], color=c, ls=ls, lw=2,
+                       label=f"{r['regra']} ({r['rho_2o_periodo']:.3f})")
+    ax.set_xlabel(f"ρ médio da carteira no 2º período (a partir de {tab['inicio_2o_periodo'].iloc[0]})")
+    ax.set_ylabel("nº de carteiras sorteadas")
+    ax.set_title("Carteiras escolhidas no 1º período, medidas no 2º", weight="bold")
+    ax.legend(fontsize=7.5, loc="upper right")
+    salva_figura(pasta, "06_carteiras_rede.png")
 
 
 # ---------------------------------------------------------------- 07 robustez
@@ -448,11 +591,11 @@ def figuras_grafos(GA, GB, MST, GC, atrib, pasta):
     desenha_grafo(GC, atrib, f"Camada C — perfil fundamentalista (kNN, k={cm.K_KNN_C})",
                   pasta, "08_grafo_C.png", lay(GC))
     posM = lay(MST)
-    for nome, fundos in [("ideal", data.CARTEIRA_IDEAL), ("falsa", data.CARTEIRA_FALSA)]:
+    for (titulo, fundos), arq in zip(CARTEIRAS_EXEMPLO, ["referencia", "concentrada"]):
         presentes = set(fundos) & set(MST)
         if len(presentes) >= 2:
-            desenha_grafo(MST, atrib, f"Carteira {nome} destacada na MST", pasta,
-                          f"09_carteira_{nome}.png", posM, destaque=presentes)
+            desenha_grafo(MST, atrib, f"Carteira {titulo.lower()} destacada na MST", pasta,
+                          f"09_carteira_{arq}.png", posM, destaque=presentes)
 
 
 # ---------------------------------------------------------------- execução
@@ -521,7 +664,11 @@ def main():
     figura_graus(camadas, pasta)
 
     print("\n[03] pontes (intermediação na Camada B)")
-    print(tabela_pontes(GB, MST, atrib, pasta).to_string())
+    freq = None
+    if len(atrib) <= N_ROTULOS:     # em universos grandes a reamostragem fica lenta
+        print(f"   estabilidade: {N_BOOT} reamostragens dos pregões...")
+        freq = estabilidade_pontes(ret)
+    print(tabela_pontes(GB, MST, atrib, pasta, freq_top10=freq).to_string())
 
     figura_matriz_correlacao(corr, atrib, pasta)
 
@@ -530,13 +677,18 @@ def main():
     print("\n[05] pares de segmentos diferentes com maior ρ")
     print(pares_cruzados(corr, atrib, GA_completo, pasta).drop(columns="em_comum_A").to_string())
 
-    print("\n[06] carteiras")
-    part, mod = gr.comunidades(GB)
-    print(f"   Louvain na Camada B: {len(set(part.values()))} comunidades, "
-          f"modularidade {mod:.3f}")
-    tab = avalia_carteiras(corr, atrib, cont, MST, part, pasta)
+    print("\n[06] carteiras de exemplo (comparadas com sorteadas de mesma composição)")
+    tab = avalia_carteiras(corr, atrib, MST, pasta)
     if tab is not None:
         print(tab.to_string())
+
+    print("\n[06b] carteiras pela rede: escolha no 1º período, medida no 2º")
+    tab_rede, acaso = carteiras_fora_da_amostra(ret, atrib["segmento"], "base")
+    if tab_rede is not None:
+        tab_rede = tab_rede.round(3)
+        salva_tabela(tab_rede, pasta, "06_carteiras_rede", index=False)
+        figura_carteiras_rede(tab_rede, acaso, pasta)
+        print(tab_rede.drop(columns=["fundos", "base"]).to_string(index=False))
 
     print("\n[07] robustez e choque de segmento")
     grafos_b = {"MST": MST, f"MST ∪ ρ≥{cm.RHO_MIN_B}": GB}
