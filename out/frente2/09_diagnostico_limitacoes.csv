@@ -1,0 +1,10 @@
+tema,medida,valor,observação
+fator de mercado,1º autovalor,9.77,21.2% da variância total
+fator de mercado,limite de ruído (Marchenko-Pastur),1.7,"N=46, T=497"
+fator de mercado,autovalores acima do ruído,2.0,"o 2º é 1.74, logo acima do limite"
+regime,ρ médio em 2023,0.08,246 pregões
+regime,ρ médio em 2024,0.27,251 pregões
+regime,correlação entre as matrizes de 2023 e 2024,0.17,sobre os pares
+frequência,"mediana de ρ, retorno diário",0.19,497 pregões
+frequência,"mediana de ρ, retorno semanal",0.32,agregando os retornos por semana
+camada C,maior correlação entre indicadores (patrimonio_liquido × liquidez),0.92,mede a mesma dimensão duas vezes

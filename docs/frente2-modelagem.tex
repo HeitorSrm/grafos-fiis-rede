@@ -249,20 +249,49 @@ nesse indicador.
 
 \subsection{Limitações da modelagem}
 
-A modelagem está sujeita a cinco limitações que condicionam a leitura dos
-resultados. Em primeiro lugar, os limiares constituem decisões de modelagem e
-não parâmetros estimados, razão pela qual a análise de sensibilidade documenta
-o comportamento das métricas sob valores alternativos. Em segundo lugar, a
-correlação é sensível à janela adotada e a mudanças de regime, de modo que os
-resultados se referem especificamente ao biênio 2023--2024. Em terceiro lugar,
-a presença de aresta na Camada B não implica correlação elevada, dado que a
-árvore geradora impõe $n-1$ arestas independentemente de sua intensidade. Em
-quarto lugar, a Camada A depende da qualidade dos atributos declarados: os
-locatários só se aplicam aos vinte e seis fundos de tijolo, dos quais sete
-apresentam relação genérica, descartada, de modo que vinte e sete dos
-quarenta e seis fundos não contribuem com locatários. Por fim, a
+A modelagem está sujeita a um conjunto de limitações que condicionam a leitura
+dos resultados. De início, cumpre registrar que os limiares constituem
+decisões de modelagem e não parâmetros estimados, razão pela qual a análise de
+sensibilidade documenta o comportamento das métricas sob valores alternativos.
+
+No que se refere à Camada A, a construção depende da qualidade dos atributos
+declarados: os locatários só se aplicam aos vinte e seis fundos de tijolo, dos
+quais sete apresentam relação genérica, descartada, de modo que vinte e sete
+dos quarenta e seis fundos não contribuem com locatários. Além do mais, a
 normalização do Jaccard pela união faz com que fundos com mais atributos
 registrados tendam a apresentar pesos menores, o que exige ressalva ao
 comparar pesos entre segmentos distintos, embora a comparação dentro de um
 mesmo segmento permaneça válida. O atributo que permitiria distinguir os
 fundos de papel entre si, o indexador, não foi coletado.
+
+Quanto à Camada B, a limitação mais relevante reside no fato de a estrutura de
+correlação ser dominada por um único fator. O primeiro autovalor da matriz
+corresponde a $21{,}2\%$ da variância total, e apenas dois autovalores superam
+o limite de ruído de Marchenko--Pastur, igual a $1{,}70$ para $n = 46$ e
+$T = 497$, sendo o segundo de $1{,}74$, imediatamente acima desse limite.
+Depreende-se que parcela expressiva do co-movimento captado corresponde ao
+mercado como um todo, e não a afinidade entre fundos específicos. Soma-se a
+isso a ocorrência de mudança de regime no interior da própria janela: a
+correlação média passa de $0{,}08$ em 2023 para $0{,}27$ em 2024, e as
+matrizes dos dois anos apresentam correlação de apenas $0{,}17$ entre si, de
+maneira que a rede descreve o biênio como um todo e não um ano isolado.
+Outrossim, a frequência diária subestima a correlação de fundos pouco
+negociados, cujo preço não se altera a cada pregão: a mediana de $\rho$ é de
+$0{,}19$ no retorno diário e de $0{,}32$ no semanal. Por fim, a presença de
+aresta nessa camada não implica correlação elevada, dado que a árvore geradora
+impõe $n-1$ arestas independentemente de sua intensidade.
+
+Na Camada C, dois dos cinco indicadores medem essencialmente a mesma dimensão:
+o patrimônio líquido e a liquidez diária apresentam correlação de $0{,}92$, de
+modo que o porte do fundo influencia duas vezes a distância euclidiana.
+Acrescente-se que os indicadores correspondem à data da coleta e não ao
+período 2023--2024, ao passo que a Camada B descreve o biênio, o que impõe
+cautela na comparação direta entre ambas.
+
+Cabe, por fim, uma ressalva quanto à validação: na Camada A, os algoritmos de
+Louvain e de Leiden alcançam o mesmo valor de modularidade, $Q = 0{,}574$, com
+partições distintas, de seis e cinco comunidades respectivamente, e o índice
+Rand ajustado entre execuções do Louvain com sementes diferentes é de
+$0{,}69$. A modularidade mostra-se estável, a partição não, razão pela qual o
+número de comunidades e a concordância com o segmento devem ser lidos como
+ordem de grandeza.

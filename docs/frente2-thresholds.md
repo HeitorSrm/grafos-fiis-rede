@@ -232,19 +232,60 @@ diferentes. Se uma delas fosse redundante, apareceria aqui.
 
 ## Limitações a declarar no relatório
 
+Os números citados abaixo saem de
+`out/frente2/09_diagnostico_limitacoes.csv`, gerado pelo próprio
+`src/frente2.py`.
+
+### Gerais
+
 - Os cinco limiares são decisões de modelagem. A varredura em
   `out/frente2/` mostra como as métricas respondem a cada um.
-- A correlação é sensível à janela e a mudanças de regime. O período usado é
-  2023–2024 e deve ser reportado junto com qualquer resultado.
 - Nove fundos ficaram fora por qualidade de dados, não por irrelevância.
-- A Camada A depende de `segmento`, `gestora` e `inquilinos`. Inquilino só
-  existe para os 26 fundos de tijolo, e 7 deles (os shoppings) têm lista
-  genérica, ignorada: 27 dos 46 fundos ficam sem inquilino.
+
+### Camada A
+
+- Depende de `segmento`, `gestora` e `inquilinos`. Inquilino só existe para os
+  26 fundos de tijolo, e 7 deles (os shoppings) têm lista genérica, ignorada:
+  27 dos 46 fundos ficam sem inquilino.
 - O Jaccard divide pela união, então o fundo sobre o qual temos mais
   informação tem mais chance de divergir (viés de cobertura −0,72). Peso
   médio intra-Logística 0,158 contra 0,324 intra-Papel no backbone. Comparar
   pesos **entre** segmentos exige essa ressalva; **dentro** do mesmo segmento
   vale. O atributo que resolveria os empates que restam no Papel é o
   `indexador` (CDI × IPCA), que não foi coletado.
-- A presença de aresta na Camada B não implica correlação alta, por causa das
-  arestas da MST.
+
+### Camada B
+
+- **Um único fator domina a correlação.** O primeiro autovalor da matriz vale
+  9,77, isto é, 21,2% da variância total, e apenas dois autovalores superam o
+  limite de ruído de Marchenko-Pastur, que para N=46 e T=497 é 1,70 — e o
+  segundo vale 1,74, logo acima. Na prática há um fator só, o mercado. Boa
+  parte do co-movimento captado pela camada é o mercado inteiro subindo e
+  descendo junto, não afinidade entre fundos específicos. Qualquer conclusão
+  tirada da Camada B precisa dessa ressalva.
+- **Mudança de regime dentro da janela.** O ρ médio passa de 0,08 em 2023 para
+  0,27 em 2024, e as matrizes de correlação dos dois anos têm correlação de
+  apenas 0,17 entre si. A rede da Camada B descreve o biênio como um todo e
+  não vale para um ano isolado.
+- **A frequência diária subestima o fundo ilíquido.** A mediana de ρ é 0,19 no
+  retorno diário e 0,32 no semanal, porque o preço de um fundo pouco negociado
+  não se move todo dia. O valor semanal coincide com o ρ* adotado, o que ajuda
+  a enquadrar a escolha do limiar.
+- A presença de aresta não implica correlação alta, por causa das arestas da
+  MST.
+
+### Camada C
+
+- **Dois dos cinco indicadores medem a mesma coisa.** Patrimônio líquido e
+  liquidez diária têm correlação 0,92, de modo que o tamanho do fundo pesa
+  duas vezes na distância euclidiana.
+- Os indicadores são da data da coleta, não do período 2023–2024. A Camada C
+  descreve o fundo hoje, enquanto a Camada B descreve o biênio, e as duas são
+  comparadas entre si.
+
+### Validação
+
+- **A modularidade é estável, a partição não.** Na Camada A, Louvain e Leiden
+  empatam em Q = 0,574 com partições diferentes, de 6 e 5 comunidades, e o ARI
+  entre sementes do Louvain é 0,69. O número de comunidades e o ARI com o
+  segmento devem ser lidos como ordem de grandeza, não como valor exato.
