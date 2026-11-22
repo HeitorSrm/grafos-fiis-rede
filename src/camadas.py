@@ -231,9 +231,11 @@ def grafo_estrutural(atrib, peso="jaccard"):
         comuns = I[a] & I[b]
         if not comuns:
             continue
-        w = sum(idf[it] for it in comuns)
+        # soma em ordem fixa: a ordem de um set muda a cada execução e, em
+        # ponto flutuante, mudaria o último dígito do peso (e desempates)
+        w = sum(idf[it] for it in sorted(comuns))
         if peso == "jaccard":
-            w /= sum(idf[it] for it in I[a] | I[b])
+            w /= sum(idf[it] for it in sorted(I[a] | I[b]))
         if w > 0:
             G.add_edge(a, b, weight=w, itens=len(comuns))
     return G
