@@ -1,0 +1,8 @@
+criterio,forte,realista,regime
+B e C conexas; A com os mesmos componentes do grafo completo,5/5,5/5,5/5
+"A não mistura segmentos (pureza > 0,9)",5/5,5/5,5/5
+"C não mistura perfis (pureza > 0,8) e ignora o segmento (ARI < 0,1)",5/5,5/5,5/5
+"pontes plantadas no topo (> 10x o acaso de 2,4%)",5/5,0/5,0/5
+pares cruzados vêm da estrutura plantada (> 5x o acaso),5/5,5/5,4/5
+pares cruzados sem vínculo na Camada A (> 80%),5/5,5/5,5/5
+carteiras fora da amostra: aparente > acaso > efetiva,5/5,5/5,3/5
