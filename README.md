@@ -52,6 +52,12 @@ segue o setor em boa parte (o resto é gestora e inquilino em comum), a B o
 acompanha parcialmente e a C é quase ortogonal a ele. O ARI é validação, não
 objetivo: o segmento é entrada da Camada A.
 
+> O Louvain é estocástico, e a coluna de ARI acima vem de uma única execução.
+> Em 200 execuções com sementes diferentes (`out/frente2/10_estabilidade_ari.csv`),
+> o ARI médio com o segmento é 0,49 na Camada A, 0,17 na B e 0,11 na C. A
+> Camada B é a que mais varia (de 0,10 a 0,27): sua estrutura de comunidades
+> é fraca, coerente com a baixa correlação entre os fundos.
+
 ## Rodando
 
 ```bash
