@@ -225,6 +225,61 @@ def _curva(ax, xs, tabela, escolhido, titulo, xlabel):
 
 
 # -------------------------------------------------------------- desenhos
+def diagnostico_limitacoes(corr, ret, cont):
+    """
+    Mede as limitações das Camadas B e C que o relatório precisa declarar,
+    para que os números citados no texto sejam reproduzíveis.
+
+    Fator de mercado: compara o espectro da matriz de correlação com o limite
+    de ruído de Marchenko-Pastur, (1 + sqrt(N/T))^2. Autovalor abaixo desse
+    limite é indistinguível do que se obteria com séries aleatórias.
+
+    Regime: a matriz de 2023 contra a de 2024.
+
+    Frequência: a correlação diária subestima o co-movimento de ativo pouco
+    negociado, porque o preço não se move todo dia.
+
+    Colinearidade da Camada C: dois indicadores muito correlacionados fazem a
+    mesma dimensão pesar duas vezes na distância euclidiana.
+    """
+    N, T = len(corr), len(ret)
+    iu = np.triu_indices(N, 1)
+    ev = np.sort(np.linalg.eigvalsh(corr.values))[::-1]
+    limite = (1 + np.sqrt(N / T)) ** 2
+
+    r23 = ret[ret.index.year == 2023]
+    r24 = ret[ret.index.year == 2024]
+    m23 = gr.matriz_correlacao(r23).values[iu]
+    m24 = gr.matriz_correlacao(r24).values[iu]
+    semanal = gr.matriz_correlacao(ret.resample("W").sum()).values[iu]
+
+    c = cont.corr().abs().to_numpy(copy=True)
+    np.fill_diagonal(c, 0.0)
+    i, j = np.unravel_index(np.argmax(c), c.shape)
+
+    linhas = [
+        ("fator de mercado", "1º autovalor", round(ev[0], 2),
+         f"{ev[0] / N:.1%} da variância total"),
+        ("fator de mercado", "limite de ruído (Marchenko-Pastur)",
+         round(limite, 2), f"N={N}, T={T}"),
+        ("fator de mercado", "autovalores acima do ruído", int((ev > limite).sum()),
+         f"o 2º é {ev[1]:.2f}, logo acima do limite"),
+        ("regime", "ρ médio em 2023", round(m23.mean(), 2), f"{len(r23)} pregões"),
+        ("regime", "ρ médio em 2024", round(m24.mean(), 2), f"{len(r24)} pregões"),
+        ("regime", "correlação entre as matrizes de 2023 e 2024",
+         round(np.corrcoef(m23, m24)[0, 1], 2), "sobre os pares"),
+        ("frequência", "mediana de ρ, retorno diário",
+         round(np.median(corr.values[iu]), 2), f"{T} pregões"),
+        ("frequência", "mediana de ρ, retorno semanal",
+         round(np.median(semanal), 2), "agregando os retornos por semana"),
+        ("camada C", f"maior correlação entre indicadores "
+         f"({cont.columns[i]} × {cont.columns[j]})",
+         round(c[i, j], 2), "mede a mesma dimensão duas vezes"),
+    ]
+    return pd.DataFrame(linhas, columns=["tema", "medida", "valor", "observação"]
+                        ).set_index(["tema", "medida"])
+
+
 def _cores(G, atrib):
     return [cam.PALETA.get(atrib.loc[n, "segmento"], "#94a3b8") for n in G]
 
@@ -338,6 +393,7 @@ def main():
          "camadas conexas, com grau médio entre 3,0 e 5,3"},
     ]).set_index("limiar")
     salva_tabela(escolhidos, "07_limiares_escolhidos")
+    salva_tabela(diagnostico_limitacoes(corr, ret, cont), "09_diagnostico_limitacoes")
 
     so_mst = {(a, b) for a, b, d in GB.edges(data=True) if d["origem"] == "mst"}
     desenha(GA, atrib, f"Camada A — estrutural, backbone k={cam.K_BACKBONE_A}",

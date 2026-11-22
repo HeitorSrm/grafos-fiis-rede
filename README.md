@@ -88,7 +88,7 @@ A base de atributos usada pela Frente 2 é gerada por
 - `data.py`, `main.py` — protótipo inicial com dados simulados
 
 ### Documentação — `docs/`
-- `frente2-thresholds.md` — calibragem dos limiares, com as tabelas da varredura
+- `frente2-thresholds.md` — calibragem dos limiares, tabelas da varredura e limitações a declarar
 - `frente2-camada-a.md` — decisões da Camada A (inquilinos, peso Jaccard,
   backbone com empates), com os testes de cada uma
 - `frente2-modelagem.tex` — seção de Modelagem em LaTeX, pronta para o Overleaf
