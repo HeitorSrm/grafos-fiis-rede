@@ -1,6 +1,6 @@
 limiar,valor,camada,critério
 COBERTURA_MIN,0.9,dados,fundo precisa de cotação real em 90% do período; abaixo disso a série é cópia da coleta
 ZEROS_MAX,0.3,dados,"mais de 30% de pregões parados indica iliquidez ou falha da fonte, não ausência de co-movimento"
-K_BACKBONE_A,3.0,A,menor k que mantém A e C conexas (k=2 parte a Camada A em 4 componentes); corte por peso seria enviesado pelo tamanho do segmento
+K_BACKBONE_A,3.0,A,"menor k que deixa A e C com grau médio acima de 3, alinhado à Camada B (com k=2 a C fica em 2,9); na A a modularidade é máxima até k=3 e cai a partir de k=4. Empates com a k-ésima aresta são mantidos; corte por peso seria enviesado pelo tamanho do segmento"
 RHO_MIN_B,0.32,B,"percentil 95 da distribuição de correlação entre pares (0,315, arredondado para 0,32)"
-K_KNN_C,3.0,C,"mesmo k da Camada A, pela mesma regra; deixa as três camadas com grau médio entre 3,0 e 4,3"
+K_KNN_C,3.0,C,"mesmo k da Camada A, pela mesma regra; deixa as três camadas conexas, com grau médio entre 3,0 e 5,3"

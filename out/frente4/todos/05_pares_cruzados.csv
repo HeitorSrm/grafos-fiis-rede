@@ -1,16 +1,16 @@
 ,fundo_1,segmento_1,fundo_2,segmento_2,rho,peso_A,em_comum_A
-1,HGLG11,Logistica,HGRU11,Renda Urbana,0.406,2.912,"gestora=Pátria Investimentos, tipo_fundo=Tijolo"
-2,BTLG11,Logistica,TRXF11,Renda Urbana,0.387,3.829,"inquilino=assaí, tipo_fundo=Tijolo"
+1,HGLG11,Logística,HGRU11,Renda Urbana,0.406,0.083,gestora=Pátria Investimentos
+2,BTLG11,Logística,TRXF11,Renda Urbana,0.387,0.071,inquilino=assaí
 3,SNCI11,Papel,XPML11,Shoppings,0.386,0.0,
-4,BTLG11,Logistica,SNCI11,Papel,0.363,0.0,
+4,BTLG11,Logística,SNCI11,Papel,0.363,0.0,
 5,TRXF11,Renda Urbana,VRTA11,Papel,0.361,0.0,
-6,BTLG11,Logistica,HSML11,Shoppings,0.36,0.693,tipo_fundo=Tijolo
-7,BTLG11,Logistica,VISC11,Shoppings,0.36,0.693,tipo_fundo=Tijolo
-8,HGLG11,Logistica,XPML11,Shoppings,0.355,0.693,tipo_fundo=Tijolo
-9,HGCR11,Papel,HGLG11,Logistica,0.352,2.219,gestora=Pátria Investimentos
+6,BTLG11,Logística,HSML11,Shoppings,0.36,0.0,
+7,BTLG11,Logística,VISC11,Shoppings,0.36,0.0,
+8,HGLG11,Logística,XPML11,Shoppings,0.355,0.0,
+9,HGCR11,Papel,HGLG11,Logística,0.352,0.156,gestora=Pátria Investimentos
 10,HGCR11,Papel,TRXF11,Renda Urbana,0.349,0.0,
 11,HABT11,Papel,HGRU11,Renda Urbana,0.339,0.0,
 12,SNCI11,Papel,TRXF11,Renda Urbana,0.339,0.0,
-13,BTLG11,Logistica,VRTA11,Papel,0.338,0.0,
-14,TRXF11,Renda Urbana,XPML11,Shoppings,0.335,0.693,tipo_fundo=Tijolo
-15,HGLG11,Logistica,SNCI11,Papel,0.334,0.0,
+13,BTLG11,Logística,VRTA11,Papel,0.338,0.0,
+14,TRXF11,Renda Urbana,XPML11,Shoppings,0.335,0.0,
+15,HGLG11,Logística,SNCI11,Papel,0.334,0.0,

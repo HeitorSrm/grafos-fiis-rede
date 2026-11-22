@@ -12,6 +12,8 @@ Uso (a partir da raiz do repositorio):
 Saida: out/frente2/
 """
 import argparse
+import collections
+import itertools
 import os
 
 import matplotlib
@@ -61,7 +63,9 @@ def metricas(G, atrib, rotulo):
         a = gr.concorda_com_segmento(part, atrib)
     else:
         q = ncom = a = np.nan
+    pesos = {round(d["weight"], 6) for _, _, d in G.edges(data=True)}
     return {"configuracao": rotulo, "arestas": e,
+            "pesos_distintos": len(pesos),
             "densidade": round(2 * e / (n * (n - 1)), 3),
             "grau_medio": round(2 * e / n, 1),
             "componentes": len(componentes), "isolados": isolados,
@@ -86,15 +90,76 @@ def _atrib_legado(atrib):
     return legado
 
 
-def efeito_tipo_fundo(atrib):
+def evolucao_camada_a(atrib):
+    """Uma decisao por linha, para medir o efeito de cada uma."""
     com = gr.grafo_estrutural(_atrib_legado(atrib), limiar=0.0)
-    sem = cam.grafo_estrutural(atrib)
+    soma = cam.grafo_estrutural(atrib, peso="soma")
+    jac = cam.grafo_estrutural(atrib, peso="jaccard")
     return pd.DataFrame([
-        metricas(com, atrib, "com tipo_fundo (versão anterior)"),
-        metricas(sem, atrib, "sem tipo_fundo"),
-        metricas(cam.backbone_knn(sem, cam.K_BACKBONE_A), atrib,
-                 f"sem tipo_fundo + backbone k={cam.K_BACKBONE_A}"),
+        metricas(com, atrib, "1. com tipo_fundo, soma do idf"),
+        metricas(soma, atrib, "2. sem tipo_fundo, soma do idf"),
+        metricas(jac, atrib, "3. sem tipo_fundo, Jaccard ponderado"),
+        metricas(cam.backbone_knn(jac, cam.K_BACKBONE_A), atrib,
+                 f"4. Jaccard + backbone k={cam.K_BACKBONE_A} (final)"),
     ]).set_index("configuracao")
+
+
+# --------------------------------------- camada A: formulas de peso
+def _cosseno(I, idf, a, b):
+    num = sum(idf[x] ** 2 for x in I[a] & I[b])
+    return num / np.sqrt(sum(idf[x] ** 2 for x in I[a]) *
+                         sum(idf[x] ** 2 for x in I[b]))
+
+
+def _gower(atrib, a, b):
+    """Media por atributo; inquilino so entra se os dois tiverem lista."""
+    s = [float(atrib.loc[a, c] == atrib.loc[b, c]) for c in cam.ATRIBUTOS_A]
+    qa, qb = set(atrib.loc[a, "inquilinos"]), set(atrib.loc[b, "inquilinos"])
+    if qa and qb:
+        s.append(len(qa & qb) / len(qa | qb))
+    return float(np.mean(s))
+
+
+def comparacao_peso_a(atrib):
+    """
+    Mesmas regras (inquilino so de tijolo, backbone k=3 com empates),
+    mudando so a formula do peso. vies_cobertura = correlacao entre o nº
+    de itens de um fundo e a forca media das suas arestas: positivo favorece
+    quem tem mais atributos, negativo penaliza.
+    """
+    I = cam.itens_de(atrib)
+    freq = collections.Counter(x for s in I.values() for x in s)
+    idf = {x: np.log(len(I) / c) for x, c in freq.items()}
+
+    def monta(f):
+        G = nx.Graph()
+        G.add_nodes_from(atrib.index)
+        for a, b in itertools.combinations(atrib.index, 2):
+            if I[a] & I[b]:
+                G.add_edge(a, b, weight=f(a, b))
+        return G
+
+    grafos = {"soma do idf": cam.grafo_estrutural(atrib, peso="soma"),
+              "Jaccard ponderado": cam.grafo_estrutural(atrib, peso="jaccard"),
+              "cosseno (TF-IDF)": monta(lambda a, b: _cosseno(I, idf, a, b)),
+              "Gower": monta(lambda a, b: _gower(atrib, a, b))}
+    seg = atrib["segmento"]
+    n_itens = pd.Series({t: len(I[t]) for t in I})
+    linhas = []
+    for nome, G in grafos.items():
+        B = cam.backbone_knn(G, cam.K_BACKBONE_A)
+        forca = pd.Series({t: np.mean([d["weight"] for d in G[t].values()])
+                           for t in G})
+        intra = {s: np.mean([B[a][b]["weight"] for a, b in B.edges()
+                             if seg[a] == seg[b] == s])
+                 for s in ["Logística", "Papel"]}
+        linha = metricas(B, atrib, nome)
+        linha["pesos_distintos"] = len({round(d["weight"], 6)
+                                        for _, _, d in G.edges(data=True)})
+        linha["vies_cobertura"] = round(np.corrcoef(n_itens, forca)[0, 1], 2)
+        linha["razao_intra_log_papel"] = round(intra["Logística"] / intra["Papel"], 2)
+        linhas.append(linha)
+    return pd.DataFrame(linhas).set_index("configuracao")
 
 
 # ------------------------------------------------------------ varreduras
@@ -160,6 +225,61 @@ def _curva(ax, xs, tabela, escolhido, titulo, xlabel):
 
 
 # -------------------------------------------------------------- desenhos
+def diagnostico_limitacoes(corr, ret, cont):
+    """
+    Mede as limitações das Camadas B e C que o relatório precisa declarar,
+    para que os números citados no texto sejam reproduzíveis.
+
+    Fator de mercado: compara o espectro da matriz de correlação com o limite
+    de ruído de Marchenko-Pastur, (1 + sqrt(N/T))^2. Autovalor abaixo desse
+    limite é indistinguível do que se obteria com séries aleatórias.
+
+    Regime: a matriz de 2023 contra a de 2024.
+
+    Frequência: a correlação diária subestima o co-movimento de ativo pouco
+    negociado, porque o preço não se move todo dia.
+
+    Colinearidade da Camada C: dois indicadores muito correlacionados fazem a
+    mesma dimensão pesar duas vezes na distância euclidiana.
+    """
+    N, T = len(corr), len(ret)
+    iu = np.triu_indices(N, 1)
+    ev = np.sort(np.linalg.eigvalsh(corr.values))[::-1]
+    limite = (1 + np.sqrt(N / T)) ** 2
+
+    r23 = ret[ret.index.year == 2023]
+    r24 = ret[ret.index.year == 2024]
+    m23 = gr.matriz_correlacao(r23).values[iu]
+    m24 = gr.matriz_correlacao(r24).values[iu]
+    semanal = gr.matriz_correlacao(ret.resample("W").sum()).values[iu]
+
+    c = cont.corr().abs().to_numpy(copy=True)
+    np.fill_diagonal(c, 0.0)
+    i, j = np.unravel_index(np.argmax(c), c.shape)
+
+    linhas = [
+        ("fator de mercado", "1º autovalor", round(ev[0], 2),
+         f"{ev[0] / N:.1%} da variância total"),
+        ("fator de mercado", "limite de ruído (Marchenko-Pastur)",
+         round(limite, 2), f"N={N}, T={T}"),
+        ("fator de mercado", "autovalores acima do ruído", int((ev > limite).sum()),
+         f"o 2º é {ev[1]:.2f}, logo acima do limite"),
+        ("regime", "ρ médio em 2023", round(m23.mean(), 2), f"{len(r23)} pregões"),
+        ("regime", "ρ médio em 2024", round(m24.mean(), 2), f"{len(r24)} pregões"),
+        ("regime", "correlação entre as matrizes de 2023 e 2024",
+         round(np.corrcoef(m23, m24)[0, 1], 2), "sobre os pares"),
+        ("frequência", "mediana de ρ, retorno diário",
+         round(np.median(corr.values[iu]), 2), f"{T} pregões"),
+        ("frequência", "mediana de ρ, retorno semanal",
+         round(np.median(semanal), 2), "agregando os retornos por semana"),
+        ("camada C", f"maior correlação entre indicadores "
+         f"({cont.columns[i]} × {cont.columns[j]})",
+         round(c[i, j], 2), "mede a mesma dimensão duas vezes"),
+    ]
+    return pd.DataFrame(linhas, columns=["tema", "medida", "valor", "observação"]
+                        ).set_index(["tema", "medida"])
+
+
 def _cores(G, atrib):
     return [cam.PALETA.get(atrib.loc[n, "segmento"], "#94a3b8") for n in G]
 
@@ -170,12 +290,15 @@ def _legenda(G, atrib):
 
 
 def desenha(G, atrib, titulo, nome, tracejadas=()):
-    pos = nx.spring_layout(G, seed=3, k=0.7)
+    # Kamada-Kawai pela distancia em saltos: nao depende da escala dos pesos
+    # (o spring_layout usa o peso como atracao e, com pesos entre 0 e 1 do
+    # Jaccard, espalhava os segmentos)
+    pos = nx.kamada_kawai_layout(G, weight=None)
     pesos = [d["weight"] for _, _, d in G.edges(data=True)]
     faixa = np.ptp(pesos) or 1.0
     larguras = [0.4 + 2.2 * (w - min(pesos)) / faixa for w in pesos]
 
-    plt.figure(figsize=(9, 7))
+    plt.figure(figsize=(10, 8))
     cheias = [(a, b) for a, b in G.edges() if (a, b) not in tracejadas
               and (b, a) not in tracejadas]
     nx.draw_networkx_edges(G, pos, edgelist=cheias, width=[
@@ -185,7 +308,7 @@ def desenha(G, atrib, titulo, nome, tracejadas=()):
     if tracejadas:
         nx.draw_networkx_edges(G, pos, edgelist=list(tracejadas), width=0.8,
                                style="dashed", alpha=0.5, edge_color="#94a3b8")
-    nx.draw_networkx_nodes(G, pos, node_size=820,
+    nx.draw_networkx_nodes(G, pos, node_size=640,
                            node_color=_cores(G, atrib), linewidths=0.4,
                            edgecolors="white")
     nx.draw_networkx_labels(G, pos, font_size=6, font_color="white",
@@ -224,8 +347,11 @@ def main():
           f"(mediana {np.median(pares):.3f}, máximo {pares.max():.3f})")
 
     if not args.so_final:
-        print("[1/3] efeito da remoção do tipo_fundo")
-        salva_tabela(efeito_tipo_fundo(atrib), "02_efeito_tipo_fundo")
+        print("[1/3] evolução da Camada A e comparação das fórmulas de peso")
+        salva_tabela(evolucao_camada_a(atrib), "02_evolucao_camada_a")
+        comp = comparacao_peso_a(atrib)
+        salva_tabela(comp, "08_comparacao_peso_a")
+        print(comp.to_string())
         print("[2/3] varredura das três camadas")
         sa, sb, sc = sweep_a(atrib), sweep_b(corr, atrib), sweep_c(cont, atrib)
         salva_tabela(sa, "03_sensibilidade_camada_a")
@@ -254,17 +380,20 @@ def main():
          "critério": "mais de 30% de pregões parados indica iliquidez ou "
          "falha da fonte, não ausência de co-movimento"},
         {"limiar": "K_BACKBONE_A", "valor": cam.K_BACKBONE_A, "camada": "A",
-         "critério": "menor k que mantém A e C conexas (k=2 parte a Camada A "
-         "em 4 componentes); corte por peso seria enviesado pelo tamanho "
+         "critério": "menor k que deixa A e C com grau médio acima de 3, "
+         "alinhado à Camada B (com k=2 a C fica em 2,9); na A a modularidade "
+         "é máxima até k=3 e cai a partir de k=4. Empates com a k-ésima "
+         "aresta são mantidos; corte por peso seria enviesado pelo tamanho "
          "do segmento"},
         {"limiar": "RHO_MIN_B", "valor": cam.RHO_MIN_B, "camada": "B",
          "critério": "percentil 95 da distribuição de correlação entre pares "
          "(0,315, arredondado para 0,32)"},
         {"limiar": "K_KNN_C", "valor": cam.K_KNN_C, "camada": "C",
          "critério": "mesmo k da Camada A, pela mesma regra; deixa as três "
-         "camadas com grau médio entre 3,0 e 4,3"},
+         "camadas conexas, com grau médio entre 3,0 e 5,3"},
     ]).set_index("limiar")
     salva_tabela(escolhidos, "07_limiares_escolhidos")
+    salva_tabela(diagnostico_limitacoes(corr, ret, cont), "09_diagnostico_limitacoes")
 
     so_mst = {(a, b) for a, b, d in GB.edges(data=True) if d["origem"] == "mst"}
     desenha(GA, atrib, f"Camada A — estrutural, backbone k={cam.K_BACKBONE_A}",
