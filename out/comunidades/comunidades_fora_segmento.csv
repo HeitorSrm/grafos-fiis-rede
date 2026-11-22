@@ -1,0 +1,180 @@
+camada,metodo,ticker,comunidade,segmento,segmento_dominante,tam_comunidade
+A_backbone_k3,Girvan-Newman,ALZR11,0,Híbrido,Papel,17
+A_backbone_k3,Girvan-Newman,KFOF11,0,FoF,Papel,17
+A_backbone_k3,Girvan-Newman,KNRI11,0,Híbrido,Papel,17
+A_backbone_k3,Girvan-Newman,RBRP11,0,Híbrido,Papel,17
+A_backbone_k3,Girvan-Newman,BCIA11,1,FoF,Shoppings,9
+A_backbone_k3,Girvan-Newman,HFOF11,1,FoF,Shoppings,9
+A_backbone_k3,Girvan-Newman,HGRU11,2,Renda Urbana,Lajes,9
+A_backbone_k3,Girvan-Newman,RBVA11,2,Renda Urbana,Lajes,9
+A_backbone_k3,Girvan-Newman,TRXF11,2,Renda Urbana,Lajes,9
+A_backbone_k3,Girvan-Newman,VGIA11,4,Fiagro,Papel,4
+A_backbone_k3,Girvan-Newman,XPCA11,4,Fiagro,Papel,4
+A_backbone_k3,Louvain,KFOF11,0,FoF,Papel,12
+A_backbone_k3,Louvain,KNRI11,0,Híbrido,Papel,12
+A_backbone_k3,Louvain,ALZR11,1,Híbrido,Lajes,10
+A_backbone_k3,Louvain,HGRU11,1,Renda Urbana,Lajes,10
+A_backbone_k3,Louvain,RBVA11,1,Renda Urbana,Lajes,10
+A_backbone_k3,Louvain,TRXF11,1,Renda Urbana,Lajes,10
+A_backbone_k3,Louvain,BCIA11,2,FoF,Shoppings,8
+A_backbone_k3,Louvain,HFOF11,2,FoF,Shoppings,8
+A_backbone_k3,Louvain,VGIA11,4,Fiagro,Papel,6
+A_backbone_k3,Louvain,XPCA11,4,Fiagro,Papel,6
+A_backbone_k3,Louvain,XPML11,4,Shoppings,Papel,6
+A_backbone_k3,Louvain,RBRP11,5,Híbrido,Papel,3
+A_backbone_k3,Leiden,KFOF11,0,FoF,Papel,12
+A_backbone_k3,Leiden,KNRI11,0,Híbrido,Papel,12
+A_backbone_k3,Leiden,ALZR11,1,Híbrido,Lajes,10
+A_backbone_k3,Leiden,RBRP11,1,Híbrido,Lajes,10
+A_backbone_k3,Leiden,RBRR11,1,Papel,Lajes,10
+A_backbone_k3,Leiden,RBRY11,1,Papel,Lajes,10
+A_backbone_k3,Leiden,HGRU11,2,Renda Urbana,Logística,10
+A_backbone_k3,Leiden,RBVA11,2,Renda Urbana,Logística,10
+A_backbone_k3,Leiden,TRXF11,2,Renda Urbana,Logística,10
+A_backbone_k3,Leiden,BCIA11,3,FoF,Shoppings,8
+A_backbone_k3,Leiden,HFOF11,3,FoF,Shoppings,8
+A_backbone_k3,Leiden,VGIA11,4,Fiagro,Papel,6
+A_backbone_k3,Leiden,XPCA11,4,Fiagro,Papel,6
+A_backbone_k3,Leiden,XPML11,4,Shoppings,Papel,6
+B_MST_limiar_0.32,Girvan-Newman,ALZR11,0,Híbrido,Shoppings,15
+B_MST_limiar_0.32,Girvan-Newman,BTLG11,0,Logística,Shoppings,15
+B_MST_limiar_0.32,Girvan-Newman,GGRC11,0,Logística,Shoppings,15
+B_MST_limiar_0.32,Girvan-Newman,HGCR11,0,Papel,Shoppings,15
+B_MST_limiar_0.32,Girvan-Newman,HGLG11,0,Logística,Shoppings,15
+B_MST_limiar_0.32,Girvan-Newman,HGRE11,0,Lajes,Shoppings,15
+B_MST_limiar_0.32,Girvan-Newman,KNRI11,0,Híbrido,Shoppings,15
+B_MST_limiar_0.32,Girvan-Newman,RCRB11,0,Lajes,Shoppings,15
+B_MST_limiar_0.32,Girvan-Newman,SNCI11,0,Papel,Shoppings,15
+B_MST_limiar_0.32,Girvan-Newman,TRXF11,0,Renda Urbana,Shoppings,15
+B_MST_limiar_0.32,Girvan-Newman,BCIA11,1,FoF,Papel,8
+B_MST_limiar_0.32,Girvan-Newman,KFOF11,1,FoF,Papel,8
+B_MST_limiar_0.32,Girvan-Newman,PQDP11,1,Shoppings,Papel,8
+B_MST_limiar_0.32,Girvan-Newman,FIGS11,2,Shoppings,Logística,7
+B_MST_limiar_0.32,Girvan-Newman,HABT11,2,Papel,Logística,7
+B_MST_limiar_0.32,Girvan-Newman,HFOF11,2,FoF,Logística,7
+B_MST_limiar_0.32,Girvan-Newman,HGRU11,2,Renda Urbana,Logística,7
+B_MST_limiar_0.32,Girvan-Newman,RBVA11,2,Renda Urbana,Logística,7
+B_MST_limiar_0.32,Girvan-Newman,VINO11,3,Lajes,Papel,4
+B_MST_limiar_0.32,Girvan-Newman,MCCI11,4,Papel,Fiagro,3
+B_MST_limiar_0.32,Girvan-Newman,TEPP11,5,Lajes,Híbrido,3
+B_MST_limiar_0.32,Girvan-Newman,VILG11,5,Logística,Híbrido,3
+B_MST_limiar_0.32,Louvain,BCIA11,0,FoF,Papel,15
+B_MST_limiar_0.32,Louvain,BRCO11,0,Logística,Papel,15
+B_MST_limiar_0.32,Louvain,FIGS11,0,Shoppings,Papel,15
+B_MST_limiar_0.32,Louvain,HFOF11,0,FoF,Papel,15
+B_MST_limiar_0.32,Louvain,HGRU11,0,Renda Urbana,Papel,15
+B_MST_limiar_0.32,Louvain,KFOF11,0,FoF,Papel,15
+B_MST_limiar_0.32,Louvain,LVBI11,0,Logística,Papel,15
+B_MST_limiar_0.32,Louvain,PQDP11,0,Shoppings,Papel,15
+B_MST_limiar_0.32,Louvain,RBVA11,0,Renda Urbana,Papel,15
+B_MST_limiar_0.32,Louvain,BTLG11,1,Logística,Shoppings,11
+B_MST_limiar_0.32,Louvain,GGRC11,1,Logística,Shoppings,11
+B_MST_limiar_0.32,Louvain,HGLG11,1,Logística,Shoppings,11
+B_MST_limiar_0.32,Louvain,JSRE11,1,Lajes,Shoppings,11
+B_MST_limiar_0.32,Louvain,KNRI11,1,Híbrido,Shoppings,11
+B_MST_limiar_0.32,Louvain,XPLG11,1,Logística,Shoppings,11
+B_MST_limiar_0.32,Louvain,ALZR11,2,Híbrido,Papel,10
+B_MST_limiar_0.32,Louvain,BRCR11,2,Lajes,Papel,10
+B_MST_limiar_0.32,Louvain,RCRB11,2,Lajes,Papel,10
+B_MST_limiar_0.32,Louvain,TRXF11,2,Renda Urbana,Papel,10
+B_MST_limiar_0.32,Louvain,VINO11,2,Lajes,Papel,10
+B_MST_limiar_0.32,Louvain,VGIA11,3,Fiagro,Papel,6
+B_MST_limiar_0.32,Louvain,XPCA11,3,Fiagro,Papel,6
+B_MST_limiar_0.32,Louvain,RBRP11,4,Híbrido,Lajes,4
+B_MST_limiar_0.32,Louvain,VILG11,4,Logística,Lajes,4
+B_MST_limiar_0.32,Leiden,BCIA11,0,FoF,Papel,15
+B_MST_limiar_0.32,Leiden,BRCO11,0,Logística,Papel,15
+B_MST_limiar_0.32,Leiden,FIGS11,0,Shoppings,Papel,15
+B_MST_limiar_0.32,Leiden,HFOF11,0,FoF,Papel,15
+B_MST_limiar_0.32,Leiden,HGRU11,0,Renda Urbana,Papel,15
+B_MST_limiar_0.32,Leiden,KFOF11,0,FoF,Papel,15
+B_MST_limiar_0.32,Leiden,LVBI11,0,Logística,Papel,15
+B_MST_limiar_0.32,Leiden,PQDP11,0,Shoppings,Papel,15
+B_MST_limiar_0.32,Leiden,RBVA11,0,Renda Urbana,Papel,15
+B_MST_limiar_0.32,Leiden,BTLG11,1,Logística,Shoppings,11
+B_MST_limiar_0.32,Leiden,GGRC11,1,Logística,Shoppings,11
+B_MST_limiar_0.32,Leiden,HGLG11,1,Logística,Shoppings,11
+B_MST_limiar_0.32,Leiden,JSRE11,1,Lajes,Shoppings,11
+B_MST_limiar_0.32,Leiden,KNRI11,1,Híbrido,Shoppings,11
+B_MST_limiar_0.32,Leiden,XPLG11,1,Logística,Shoppings,11
+B_MST_limiar_0.32,Leiden,ALZR11,2,Híbrido,Papel,10
+B_MST_limiar_0.32,Leiden,BRCR11,2,Lajes,Papel,10
+B_MST_limiar_0.32,Leiden,RCRB11,2,Lajes,Papel,10
+B_MST_limiar_0.32,Leiden,TRXF11,2,Renda Urbana,Papel,10
+B_MST_limiar_0.32,Leiden,VINO11,2,Lajes,Papel,10
+B_MST_limiar_0.32,Leiden,VGIA11,3,Fiagro,Papel,6
+B_MST_limiar_0.32,Leiden,XPCA11,3,Fiagro,Papel,6
+B_MST_limiar_0.32,Leiden,RBRP11,4,Híbrido,Lajes,4
+B_MST_limiar_0.32,Leiden,VILG11,4,Logística,Lajes,4
+C_knn_k3,Girvan-Newman,HGBS11,0,Shoppings,Logística,14
+C_knn_k3,Girvan-Newman,HGRU11,0,Renda Urbana,Logística,14
+C_knn_k3,Girvan-Newman,KNCR11,0,Papel,Logística,14
+C_knn_k3,Girvan-Newman,KNIP11,0,Papel,Logística,14
+C_knn_k3,Girvan-Newman,KNRI11,0,Híbrido,Logística,14
+C_knn_k3,Girvan-Newman,MXRF11,0,Papel,Logística,14
+C_knn_k3,Girvan-Newman,RBVA11,0,Renda Urbana,Logística,14
+C_knn_k3,Girvan-Newman,TRXF11,0,Renda Urbana,Logística,14
+C_knn_k3,Girvan-Newman,VISC11,0,Shoppings,Logística,14
+C_knn_k3,Girvan-Newman,XPML11,0,Shoppings,Logística,14
+C_knn_k3,Girvan-Newman,BCIA11,1,FoF,Papel,9
+C_knn_k3,Girvan-Newman,FIGS11,1,Shoppings,Papel,9
+C_knn_k3,Girvan-Newman,FVPQ11,1,Shoppings,Papel,9
+C_knn_k3,Girvan-Newman,KFOF11,1,FoF,Papel,9
+C_knn_k3,Girvan-Newman,RCRB11,1,Lajes,Papel,9
+C_knn_k3,Girvan-Newman,XPCA11,1,Fiagro,Papel,9
+C_knn_k3,Girvan-Newman,ALZR11,2,Híbrido,Logística,7
+C_knn_k3,Girvan-Newman,HGRE11,2,Lajes,Logística,7
+C_knn_k3,Girvan-Newman,HSML11,2,Shoppings,Logística,7
+C_knn_k3,Girvan-Newman,PQDP11,2,Shoppings,Logística,7
+C_knn_k3,Girvan-Newman,TEPP11,3,Lajes,Papel,7
+C_knn_k3,Girvan-Newman,HFOF11,4,FoF,Papel,5
+C_knn_k3,Girvan-Newman,VGIA11,4,Fiagro,Papel,5
+C_knn_k3,Girvan-Newman,RBRP11,5,Híbrido,Lajes,4
+C_knn_k3,Louvain,HGBS11,0,Shoppings,Logística,14
+C_knn_k3,Louvain,HGRU11,0,Renda Urbana,Logística,14
+C_knn_k3,Louvain,KNCR11,0,Papel,Logística,14
+C_knn_k3,Louvain,KNIP11,0,Papel,Logística,14
+C_knn_k3,Louvain,KNRI11,0,Híbrido,Logística,14
+C_knn_k3,Louvain,MXRF11,0,Papel,Logística,14
+C_knn_k3,Louvain,RBVA11,0,Renda Urbana,Logística,14
+C_knn_k3,Louvain,TRXF11,0,Renda Urbana,Logística,14
+C_knn_k3,Louvain,VISC11,0,Shoppings,Logística,14
+C_knn_k3,Louvain,XPML11,0,Shoppings,Logística,14
+C_knn_k3,Louvain,BCIA11,1,FoF,Papel,9
+C_knn_k3,Louvain,FIGS11,1,Shoppings,Papel,9
+C_knn_k3,Louvain,FVPQ11,1,Shoppings,Papel,9
+C_knn_k3,Louvain,KFOF11,1,FoF,Papel,9
+C_knn_k3,Louvain,RCRB11,1,Lajes,Papel,9
+C_knn_k3,Louvain,XPCA11,1,Fiagro,Papel,9
+C_knn_k3,Louvain,ALZR11,2,Híbrido,Logística,7
+C_knn_k3,Louvain,HGRE11,2,Lajes,Logística,7
+C_knn_k3,Louvain,HSML11,2,Shoppings,Logística,7
+C_knn_k3,Louvain,PQDP11,2,Shoppings,Logística,7
+C_knn_k3,Louvain,TEPP11,3,Lajes,Papel,7
+C_knn_k3,Louvain,HFOF11,4,FoF,Papel,5
+C_knn_k3,Louvain,VGIA11,4,Fiagro,Papel,5
+C_knn_k3,Louvain,RBRP11,5,Híbrido,Lajes,4
+C_knn_k3,Leiden,HGBS11,0,Shoppings,Logística,14
+C_knn_k3,Leiden,HGRU11,0,Renda Urbana,Logística,14
+C_knn_k3,Leiden,KNCR11,0,Papel,Logística,14
+C_knn_k3,Leiden,KNIP11,0,Papel,Logística,14
+C_knn_k3,Leiden,KNRI11,0,Híbrido,Logística,14
+C_knn_k3,Leiden,MXRF11,0,Papel,Logística,14
+C_knn_k3,Leiden,RBVA11,0,Renda Urbana,Logística,14
+C_knn_k3,Leiden,TRXF11,0,Renda Urbana,Logística,14
+C_knn_k3,Leiden,VISC11,0,Shoppings,Logística,14
+C_knn_k3,Leiden,XPML11,0,Shoppings,Logística,14
+C_knn_k3,Leiden,BCIA11,1,FoF,Papel,9
+C_knn_k3,Leiden,FIGS11,1,Shoppings,Papel,9
+C_knn_k3,Leiden,FVPQ11,1,Shoppings,Papel,9
+C_knn_k3,Leiden,KFOF11,1,FoF,Papel,9
+C_knn_k3,Leiden,RCRB11,1,Lajes,Papel,9
+C_knn_k3,Leiden,XPCA11,1,Fiagro,Papel,9
+C_knn_k3,Leiden,ALZR11,2,Híbrido,Logística,7
+C_knn_k3,Leiden,HGRE11,2,Lajes,Logística,7
+C_knn_k3,Leiden,HSML11,2,Shoppings,Logística,7
+C_knn_k3,Leiden,PQDP11,2,Shoppings,Logística,7
+C_knn_k3,Leiden,TEPP11,3,Lajes,Papel,7
+C_knn_k3,Leiden,HFOF11,4,FoF,Papel,5
+C_knn_k3,Leiden,VGIA11,4,Fiagro,Papel,5
+C_knn_k3,Leiden,RBRP11,5,Híbrido,Lajes,4
