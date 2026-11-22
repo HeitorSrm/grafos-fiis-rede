@@ -230,6 +230,22 @@ redundante com a Camada A.
 Os três valores diferentes são a evidência de que as camadas capturam coisas
 diferentes. Se uma delas fosse redundante, apareceria aqui.
 
+**Estabilidade do ARI.** O Louvain é estocástico, e os valores acima vêm de uma
+única execução (a semente de `gr.comunidades`). Rodando o Louvain com 200
+sementes diferentes em cada camada (`out/frente2/10_estabilidade_ari.csv`):
+
+| Camada | ARI (semente única, acima) | ARI médio em 200 execuções | Desvio | Faixa |
+|---|---|---|---|---|
+| A | 0,519 | 0,492 | 0,019 | 0,478 – 0,519 |
+| B | 0,210 | 0,171 | 0,042 | 0,104 – 0,274 |
+| C | 0,122 | 0,112 | 0,014 | 0,071 – 0,122 |
+
+A ordem A > B > C se mantém na média. A Camada B é a que mais varia: a
+estrutura de comunidades do co-movimento é fraca, coerente com a correlação
+baixa entre os fundos. Por isso, os ARIs de uma execução isolada (o 0,210 desta
+tabela ou o 0,127 da Frente 3, com outra implementação e outra semente) são
+pontos dentro dessa faixa; com 200 execuções, o valor típico da Camada B é 0,17.
+
 ## Limitações a declarar no relatório
 
 Os números citados abaixo saem de
