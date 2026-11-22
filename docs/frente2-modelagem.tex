@@ -1,25 +1,27 @@
 % ---------------------------------------------------------------------------
-% Secao de Modelagem — Frente 2
+% Modelagem — Frente 2
 % Projeto SMAC03 (Grafos / UNIFEI) — Cenario 1: Analise do Mercado de FIIs
 %
-% Para compilar no Overleaf, o preambulo precisa de:
-%   \usepackage{amsmath}
-%   \usepackage{booktabs}
-%   \usepackage{amssymb}
+% ONDE ENTRA: dentro da secao 3 (Desenvolvimento), logo depois de
+% "3.1 Coleta de Dados". Esta escrito como \subsection, virando "3.2 Modelagem"
+% e substituindo o "3.2 Exemplo de Algoritmo" que veio do template.
 %
-% Os numeros deste texto conferem com out/frente2/ e com
-% docs/frente2-thresholds.md. Reproduzir com: python src/frente2.py
+% PREAMBULO: o documento precisa de \usepackage{amsmath}, \usepackage{amssymb}
+% e \usepackage{booktabs}.
+%
+% Os numeros conferem com out/frente2/ e com docs/frente2-thresholds.md.
+% Reproduzir com: python src/frente2.py
 % ---------------------------------------------------------------------------
 
-\section{Modelagem}
+\subsection{Modelagem}
 
 A modelagem proposta representa o conjunto de fundos analisados como três
 grafos não direcionados e valorados, construídos sobre o mesmo conjunto de
 vértices. Formalmente, cada camada constitui um grafo
 $G_\ell = (V, E_\ell, w_\ell)$, com $\ell \in \{A, B, C\}$, em que $V$ é o
-conjunto dos 46 Fundos de Investimento Imobiliário da amostra, $E_\ell$ é o
-conjunto de arestas daquela camada e
-$w_\ell : E_\ell \rightarrow \mathbb{R}_{+}$ associa a cada aresta a
+conjunto dos 46 Fundos de Investimento Imobiliário remanescentes após o
+tratamento descrito na Seção~3.1, $E_\ell$ é o conjunto de arestas daquela
+camada e $w_\ell : E_\ell \rightarrow \mathbb{R}_{+}$ associa a cada aresta a
 intensidade da relação que ela representa.
 
 A opção por três camadas, e não por um único índice agregado, decorre do fato
@@ -31,9 +33,10 @@ como grafos distintos permite observar não apenas onde elas concordam, mas
 sobretudo onde divergem, que é precisamente o ponto em que a diversificação
 aparente de uma carteira se separa da diversificação efetiva.
 
-\subsection{Camada A — similaridade estrutural}
+\subsubsection{Camada A --- similaridade estrutural}
 
-A primeira camada parte das características declaradas de cada fundo. A
+A primeira camada parte das características declaradas de cada fundo, a saber,
+o segmento de atuação, a gestora responsável e os principais locatários. A
 amostra é representada por uma matriz bipartida
 $M \in \{0,1\}^{n \times m}$, na qual $n = 46$ corresponde ao número de fundos
 e $m$ ao número de itens observados, sendo cada item um par atributo--valor,
@@ -51,38 +54,61 @@ recuperação de informação. Sendo $n_q$ o número de fundos que apresentam o
 item $q$, define-se
 
 \begin{equation}
-  \mathrm{idf}(q) = \ln\!\left(\frac{n}{n_q}\right),
+  \mathrm{idf}(q) = \ln\!\left(\frac{n}{n_q}\right).
 \end{equation}
 
-de modo que o peso da aresta entre dois fundos corresponde à soma do
-$\mathrm{idf}$ dos itens que ambos compartilham:
+A ponderação por raridade, isoladamente, ainda apresenta duas deficiências,
+identificadas durante a calibragem. Em primeiro lugar, a soma do
+$\mathrm{idf}$ dos itens compartilhados favorece sistematicamente os fundos
+que possuem mais atributos preenchidos: o peso médio de uma aresta interna ao
+segmento de logística era de $2{,}57$, contra $1{,}31$ no segmento de papel,
+diferença que decorre da existência de locatários em um caso e não no outro.
+Em segundo lugar, a soma depende exclusivamente de quais atributos coincidem,
+e não da extensão em que os perfis se assemelham, de modo que o grafo completo
+apresentava apenas vinte e dois valores distintos de peso para duzentas e
+trinta e três arestas, das quais cinquenta e oito por cento eram mutuamente
+empatadas por compartilharem somente o segmento.
+
+Por conseguinte, adotou-se o índice de Jaccard ponderado pelo
+$\mathrm{idf}$, que mede a fração do perfil conjunto de dois fundos que lhes
+é comum. Sendo $A$ e $B$ os conjuntos de itens dos fundos $i$ e $j$,
 
 \begin{equation}
-  w_A(i,j) = \sum_{q \,:\, M_{iq} = M_{jq} = 1} \mathrm{idf}(q).
+  w_A(i,j) =
+  \frac{\sum_{q \in A \cap B} \mathrm{idf}(q)}
+       {\sum_{q \in A \cup B} \mathrm{idf}(q)},
 \end{equation}
 
-Itens presentes na totalidade dos fundos recebem peso nulo e, por conseguinte,
-não originam aresta.
+com $w_A(i,j) \in (0,1]$. O denominador introduz dependência também naquilo
+que distingue os fundos, elevando o número de valores distintos de peso de
+vinte e dois para cento e quatorze e corrigindo o desequilíbrio entre
+segmentos.
+
+Cumpre observar que o atributo referente aos locatários é aplicado apenas aos
+fundos de tijolo. Fundos de papel, fundos de fundos e fundos do agronegócio
+não possuem locatários, e o que a base registra nesses casos é uma descrição
+genérica do lastro, idêntica para todos os fundos de um mesmo segmento. Sua
+utilização como atributo faria com que os fundos de papel compartilhassem onze
+itens simultaneamente, originando um subgrafo completo de peso elevado que
+apenas reiteraria a informação já contida no segmento.
 
 Além do mais, a projeção bipartida tende a produzir grafos densos, visto que
 um atributo categórico compartilhado por $n_q$ fundos origina um subgrafo
 completo de $n_q$ vértices. A redução por limiar de peso mostrou-se inadequada
 neste caso específico: como o peso de uma aresta originada exclusivamente do
-segmento compartilhado equivale a $\ln(n/n_q)$, qualquer limiar elimina
+segmento compartilhado é dominado por $\ln(n/n_q)$, qualquer limiar elimina
 primeiramente os segmentos mais numerosos, que são justamente aqueles de maior
-interesse para a análise de concentração de risco. A título de ilustração, um
-limiar de $1{,}2$ removeria integralmente o segmento de papel, composto por
-quinze fundos, e preservaria integralmente o de logística, composto por sete,
-não em razão de maior ou menor similaridade, mas unicamente em razão do
-tamanho dos grupos.
+interesse para a análise de concentração de risco.
 
 Adotou-se, em substituição, uma extração de \textit{backbone} por vizinhança,
-na qual cada fundo retém as $k$ arestas de maior peso que nele incidem, sendo
-o grafo final a união dessas seleções. Outrossim, o critério passa a ser
-interno a cada vértice e, portanto, invariante ao tamanho do grupo a que ele
-pertence, e nenhum fundo permanece isolado.
+na qual cada fundo retém as $k$ arestas de maior peso que nele incidem, bem
+como aquelas que com elas empatam, sendo o grafo final a união dessas
+seleções. Outrossim, o critério passa a ser interno a cada vértice e,
+portanto, invariante ao tamanho do grupo a que ele pertence; a manutenção dos
+empates assegura que o resultado não dependa da ordem de leitura dos dados; e
+nenhum fundo permanece isolado.
 
-\subsection{Camada B — co-movimento de mercado}
+\subsubsection{Camada B --- co-movimento de mercado}
 
 A segunda camada não utiliza atributos declarados, mas as séries históricas de
 preços. A partir das cotações diárias de fechamento ajustado $P_i(t)$,
@@ -128,7 +154,7 @@ indicam o vizinho mais próximo de um fundo, ainda que a correlação seja
 moderada. Tal distinção é registrada como atributo da aresta e representada
 graficamente por traço descontínuo.
 
-\subsection{Camada C — similaridade de perfil fundamentalista}
+\subsubsection{Camada C --- similaridade de perfil fundamentalista}
 
 A terceira camada descreve cada fundo por um vetor de cinco indicadores
 quantitativos, a saber: \textit{dividend yield} acumulado em doze meses, razão
@@ -153,36 +179,23 @@ Visto que tal definição originaria um grafo completo, aplica-se a mesma
 extração por vizinhança empregada na Camada A, de modo que cada fundo retém os
 seus $k$ vizinhos mais similares.
 
-\subsection{Tratamento dos dados e calibragem dos limiares}
-
-A base de cotações originalmente levantada não apresentava valores ausentes, o
-que se mostrou artificial: o procedimento de coleta propagou retroativamente o
-primeiro preço disponível, de maneira que fundos sem histórico no início da
-janela receberam uma sequência de preços repetidos, chegando a duzentos e
-noventa e dois pregões consecutivos em um dos casos. Preços constantes
-produzem retornos nulos, e fundos cujas séries efetivamente se iniciam na
-mesma data apresentam retornos nulos simultâneos, que o coeficiente de
-correlação interpreta como concordância. Por conseguinte, estabeleceram-se
-dois critérios de qualidade: exige-se cotação efetiva em ao menos noventa por
-cento do período, o que exclui fundos ainda não negociados no início da
-janela, e admite-se no máximo trinta por cento de pregões com retorno nulo, o
-que exclui fundos cujo preço permanece travado por iliquidez. Nove dos
-cinquenta e cinco fundos originais foram removidos por esses critérios,
-restando quarenta e seis fundos e quatrocentos e noventa e sete pregões, entre
-02 de janeiro de 2023 e 30 de dezembro de 2024.
+\subsubsection{Calibragem dos limiares}
 
 Os parâmetros das três camadas foram submetidos a uma análise de
 sensibilidade, na qual se observou a resposta do número de arestas, da
 densidade, do grau médio, do número de componentes conexos e da modularidade a
-cada valor testado. O limiar da Camada B foi fixado no percentil 95 da
-distribuição de correlação da própria amostra, igual a $0{,}315$ e arredondado
-para $0{,}32$, de modo que as arestas de limiar correspondam, por definição,
-aos cinco por cento de pares mais correlacionados. Para as Camadas A e C
-adotou-se $k = 3$, o menor valor que mantém ambos os grafos conexos, uma vez
-que, com $k = 2$, a Camada A se fragmenta em quatro componentes. A adoção de
-um mesmo critério para as duas camadas resulta em grafos de densidade
-comparável, condição necessária para que a comparação entre camadas reflita
-diferenças de estrutura e não de calibragem.
+cada valor testado. Somam-se a eles os dois critérios de qualidade de dados
+descritos na Seção~3.1, igualmente tratados como parâmetros do modelo.
+
+O limiar da Camada B foi fixado no percentil 95 da distribuição de correlação
+da própria amostra, igual a $0{,}315$ e arredondado para $0{,}32$, de modo que
+as arestas de limiar correspondam, por definição, aos cinco por cento de pares
+mais correlacionados. Para as Camadas A e C adotou-se $k = 3$, o menor valor
+que mantém ambas com grau médio superior a três, compatível com o da Camada B;
+na Camada A, adicionalmente, a modularidade é máxima até $k = 3$ e decresce a
+partir de $k = 4$. A adoção de um mesmo critério para as duas camadas resulta
+em grafos de densidade comparável, condição necessária para que a comparação
+entre camadas reflita diferenças de estrutura e não de calibragem.
 
 \begin{table}[htbp]
 \centering
@@ -192,11 +205,11 @@ diferenças de estrutura e não de calibragem.
 \toprule
 \textbf{Limiar} & \textbf{Valor} & \textbf{Camada} & \textbf{Critério} \\
 \midrule
-Cobertura mínima        & 0,90 & dados & cotação efetiva em 90\% do período \\
+Cobertura mínima         & 0,90 & dados & cotação efetiva em 90\% do período \\
 Máximo de retornos nulos & 0,30 & dados & acima disso, preço travado \\
-$k$ do \textit{backbone} & 3    & A     & menor valor que mantém A e C conexas \\
-$\rho^{*}$              & 0,32 & B     & percentil 95 da correlação entre pares \\
-$k$ da vizinhança       & 3    & C     & mesmo critério da Camada A \\
+$k$ do \textit{backbone} & 3    & A     & grau médio acima de três \\
+$\rho^{*}$               & 0,32 & B     & percentil 95 da correlação \\
+$k$ da vizinhança        & 3    & C     & mesmo critério da Camada A \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -210,36 +223,39 @@ $k$ da vizinhança       & 3    & C     & mesmo critério da Camada A \\
 \textbf{Camada} & \textbf{Arestas} & \textbf{Densidade} & \textbf{Grau médio}
 & \textbf{Comp.} & \textbf{Comun.} & \textbf{Modularidade} \\
 \midrule
-A & 98 & 0,095 & 4,3 & 1 & 6 & 0,656 \\
-B & 68 & 0,066 & 3,0 & 1 & 5 & 0,422 \\
-C & 95 & 0,092 & 4,1 & 1 & 6 & 0,664 \\
+A & 122 & 0,118 & 5,3 & 1 & 6 & 0,574 \\
+B &  68 & 0,066 & 3,0 & 1 & 5 & 0,422 \\
+C &  95 & 0,092 & 4,1 & 1 & 6 & 0,664 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 Como validação da modelagem, comparou-se a partição obtida pelo algoritmo de
 Louvain em cada camada com a classificação setorial dos fundos, por meio do
-índice Rand ajustado. A Camada A apresenta concordância de $0{,}452$ no grafo
-reduzido e de $0{,}857$ no grafo completo, resultado esperado, dado que o
-segmento constitui um de seus atributos de entrada. A Camada B apresenta
-$0{,}210$ e a Camada C, $0{,}122$. Nesse viés, a divergência entre esses
-valores sustenta a decisão de manter as três camadas: o co-movimento de
-mercado acompanha apenas parcialmente a divisão setorial, ao passo que o
-perfil financeiro mostra-se praticamente ortogonal a ela. Caso alguma das
-camadas fosse redundante em relação às demais, tal redundância se manifestaria
-nesse indicador.
+índice Rand ajustado. A Camada A apresenta concordância de $0{,}519$,
+resultado esperado, dado que o segmento constitui um de seus atributos de
+entrada. A Camada B apresenta $0{,}210$ e a Camada C, $0{,}122$. Nesse viés, a
+divergência entre esses valores sustenta a decisão de manter as três camadas:
+o co-movimento de mercado acompanha apenas parcialmente a divisão setorial, ao
+passo que o perfil financeiro mostra-se praticamente ortogonal a ela. Caso
+alguma das camadas fosse redundante em relação às demais, tal redundância se
+manifestaria nesse indicador.
 
-\subsection{Limitações da modelagem}
+\subsubsection{Limitações da modelagem}
 
-A modelagem está sujeita a quatro limitações que condicionam a leitura dos
+A modelagem está sujeita a cinco limitações que condicionam a leitura dos
 resultados. Em primeiro lugar, os limiares constituem decisões de modelagem e
 não parâmetros estimados, razão pela qual a análise de sensibilidade documenta
-o comportamento das métricas sob valores alternativos. Em segundo lugar, a
-correlação é sensível à janela adotada e a mudanças de regime, de modo que os
-resultados se referem especificamente ao biênio 2023--2024. Em terceiro lugar,
-a presença de aresta na Camada B não implica correlação elevada, dado que a
-árvore geradora impõe $n-1$ arestas independentemente de sua intensidade. Por
-fim, a Camada A depende da qualidade dos atributos declarados: a relação de
-locatários encontra-se ausente em vinte e um dos quarenta e seis fundos, e
-relações idênticas repetidas em mais de quatro fundos foram descartadas por
-caracterizarem preenchimento padrão.
+o comportamento das métricas sob valores alternativos. Em segundo lugar, o
+índice de Jaccard divide pela união dos perfis, de maneira que fundos sobre os
+quais se dispõe de mais informação possuem mais oportunidade de divergir: o
+peso médio interno ao segmento de logística é de $0{,}158$, contra $0{,}324$
+no de papel, razão pela qual a comparação de pesos entre segmentos distintos
+deve ser feita com reserva, ainda que a comparação interna a um mesmo segmento
+permaneça válida. Em terceiro lugar, a correlação é sensível à janela adotada
+e a mudanças de regime, de modo que os resultados se referem especificamente
+ao biênio 2023--2024. Em quarto lugar, a presença de aresta na Camada B não
+implica correlação elevada, dado que a árvore geradora impõe $n-1$ arestas
+independentemente de sua intensidade. Por fim, o atributo referente aos
+locatários contribui em apenas dezenove dos quarenta e seis fundos, por
+aplicar-se somente aos segmentos de tijolo.

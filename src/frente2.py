@@ -86,14 +86,23 @@ def _atrib_legado(atrib):
     return legado
 
 
-def efeito_tipo_fundo(atrib):
-    com = gr.grafo_estrutural(_atrib_legado(atrib), limiar=0.0)
-    sem = cam.grafo_estrutural(atrib)
+def evolucao_camada_a(atrib):
+    """
+    As decisões da Camada A aplicadas uma de cada vez, para que o efeito de
+    cada uma fique separado. As duas primeiras linhas usam a soma de idf de
+    grafos.py (versão original); as duas últimas usam o Jaccard ponderado de
+    camadas.py, já com o inquilino restrito a tijolo.
+    """
+    legado = _atrib_legado(atrib)
+    com_tipo = gr.grafo_estrutural(legado, limiar=0.0)
+    sem_tipo = gr.grafo_estrutural(legado.assign(tipo_fundo="n/a"), limiar=0.0)
+    jaccard = cam.grafo_estrutural(atrib)
     return pd.DataFrame([
-        metricas(com, atrib, "com tipo_fundo (versão anterior)"),
-        metricas(sem, atrib, "sem tipo_fundo"),
-        metricas(cam.backbone_knn(sem, cam.K_BACKBONE_A), atrib,
-                 f"sem tipo_fundo + backbone k={cam.K_BACKBONE_A}"),
+        metricas(com_tipo, atrib, "1. soma de idf, com tipo_fundo (original)"),
+        metricas(sem_tipo, atrib, "2. soma de idf, sem tipo_fundo"),
+        metricas(jaccard, atrib, "3. Jaccard, inquilino só tijolo (completa)"),
+        metricas(cam.backbone_knn(jaccard, cam.K_BACKBONE_A), atrib,
+                 f"4. Jaccard + backbone k={cam.K_BACKBONE_A} (adotada)"),
     ]).set_index("configuracao")
 
 
@@ -224,8 +233,8 @@ def main():
           f"(mediana {np.median(pares):.3f}, máximo {pares.max():.3f})")
 
     if not args.so_final:
-        print("[1/3] efeito da remoção do tipo_fundo")
-        salva_tabela(efeito_tipo_fundo(atrib), "02_efeito_tipo_fundo")
+        print("[1/3] evolução da Camada A")
+        salva_tabela(evolucao_camada_a(atrib), "02_evolucao_camada_a")
         print("[2/3] varredura das três camadas")
         sa, sb, sc = sweep_a(atrib), sweep_b(corr, atrib), sweep_c(cont, atrib)
         salva_tabela(sa, "03_sensibilidade_camada_a")
@@ -254,15 +263,15 @@ def main():
          "critério": "mais de 30% de pregões parados indica iliquidez ou "
          "falha da fonte, não ausência de co-movimento"},
         {"limiar": "K_BACKBONE_A", "valor": cam.K_BACKBONE_A, "camada": "A",
-         "critério": "menor k que mantém A e C conexas (k=2 parte a Camada A "
-         "em 4 componentes); corte por peso seria enviesado pelo tamanho "
-         "do segmento"},
+         "critério": "menor k que deixa A e C com grau médio acima de 3; a "
+         "modularidade de A é máxima até k=3 e cai a partir de k=4; corte "
+         "por peso seria enviesado pelo tamanho do segmento"},
         {"limiar": "RHO_MIN_B", "valor": cam.RHO_MIN_B, "camada": "B",
          "critério": "percentil 95 da distribuição de correlação entre pares "
          "(0,315, arredondado para 0,32)"},
         {"limiar": "K_KNN_C", "valor": cam.K_KNN_C, "camada": "C",
          "critério": "mesmo k da Camada A, pela mesma regra; deixa as três "
-         "camadas com grau médio entre 3,0 e 4,3"},
+         "camadas com grau médio entre 3,0 e 5,3"},
     ]).set_index("limiar")
     salva_tabela(escolhidos, "07_limiares_escolhidos")
 

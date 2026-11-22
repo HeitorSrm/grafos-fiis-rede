@@ -5,8 +5,8 @@ limiar &  &  &  \\
 \midrule
 COBERTURA\_MIN & 0.900 & dados & fundo precisa de cotação real em 90\% do período; abaixo disso a série é cópia da coleta \\
 ZEROS\_MAX & 0.300 & dados & mais de 30\% de pregões parados indica iliquidez ou falha da fonte, não ausência de co-movimento \\
-K\_BACKBONE\_A & 3.000 & A & menor k que mantém A e C conexas (k=2 parte a Camada A em 4 componentes); corte por peso seria enviesado pelo tamanho do segmento \\
+K\_BACKBONE\_A & 3.000 & A & menor k que deixa A e C com grau médio acima de 3; a modularidade de A é máxima até k=3 e cai a partir de k=4; corte por peso seria enviesado pelo tamanho do segmento \\
 RHO\_MIN\_B & 0.320 & B & percentil 95 da distribuição de correlação entre pares (0,315, arredondado para 0,32) \\
-K\_KNN\_C & 3.000 & C & mesmo k da Camada A, pela mesma regra; deixa as três camadas com grau médio entre 3,0 e 4,3 \\
+K\_KNN\_C & 3.000 & C & mesmo k da Camada A, pela mesma regra; deixa as três camadas com grau médio entre 3,0 e 5,3 \\
 \bottomrule
 \end{tabular}

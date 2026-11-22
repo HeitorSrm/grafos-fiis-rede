@@ -3,6 +3,12 @@
 **Decisão:** o backbone da Camada A guarda as k arestas mais fortes de cada fundo
 **e também as que empatam com a k-ésima**.
 
+> **Nota (Frente 2):** a decisão deste documento continua valendo, mas os números
+> das tabelas abaixo foram medidos com a soma de idf, que era o peso da época.
+> Depois disso o peso passou a ser o Jaccard ponderado e o atributo `inquilino`
+> ficou restrito a fundos de tijolo, o que reduz o empate na origem: a Camada A
+> adotada tem 122 arestas e ARI 0,519. Ver `docs/frente2-thresholds.md`, seção 3.
+
 **Motivo:** sem o `tipo_fundo`, fundos que só compartilham o segmento têm arestas
 de peso idêntico (ex.: 1,12 entre quaisquer dois fundos de Papel). 29 dos 46 fundos
 tinham empate exatamente no corte k = 3, e o desempate era decidido pela ordem das

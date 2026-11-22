@@ -5,7 +5,7 @@ do projeto, o que foi testado e por que cada valor foi escolhido.
 
 Reproduzir: `python src/frente2.py` (saída em `out/frente2/`).
 
-Amostra: 46 FIIs, 497 pregões (02/01/2023 a 30/12/2024).
+Amostra: 46 FIIs, 497 observações de retorno (02/01/2023 a 30/12/2024).
 
 ## Tabela final
 
@@ -13,7 +13,7 @@ Amostra: 46 FIIs, 497 pregões (02/01/2023 a 30/12/2024).
 |---|---|---|---|
 | `COBERTURA_MIN` | 0,90 | dados | fundo precisa de cotação real em 90% do período |
 | `ZEROS_MAX` | 0,30 | dados | acima disso o preço está travado, não parado por falta de co-movimento |
-| `K_BACKBONE_A` | 3 | A | menor k que mantém A e C conexas |
+| `K_BACKBONE_A` | 3 | A | menor k que deixa A e C com grau médio acima de 3 |
 | `RHO_MIN_B` | 0,32 | B | percentil 95 da correlação entre pares |
 | `K_KNN_C` | 3 | C | mesmo k e mesma regra da Camada A |
 
@@ -21,12 +21,12 @@ Resultado nas três camadas (`out/frente2/06_camadas_calibradas.csv`):
 
 | Camada | Arestas | Densidade | Grau médio | Componentes | Isolados | Comunidades | Modularidade | ARI com segmento |
 |---|---|---|---|---|---|---|---|---|
-| A — backbone k=3 | 98 | 0,095 | 4,3 | 1 | 0 | 6 | 0,656 | 0,452 |
+| A — backbone k=3 | 122 | 0,118 | 5,3 | 1 | 0 | 6 | 0,574 | 0,519 |
 | B — MST ∪ ρ ≥ 0,32 | 68 | 0,066 | 3,0 | 1 | 0 | 5 | 0,422 | 0,210 |
 | C — kNN k=3 | 95 | 0,092 | 4,1 | 1 | 0 | 6 | 0,664 | 0,122 |
 
-As três ficam conexas, sem fundos isolados, com grau médio entre 3,0 e 4,3 e
-densidade entre 0,07 e 0,10. Isso é deliberado: se as camadas tivessem
+As três ficam conexas, sem fundos isolados, com grau médio entre 3,0 e 5,3 e
+densidade entre 0,066 e 0,118. Isso é deliberado: se as camadas tivessem
 densidades muito diferentes, a comparação entre elas mediria a calibragem em
 vez da estrutura.
 
@@ -56,47 +56,112 @@ com 251 pregões a razão entre observações e ativos cai de 10,8 para 4,7 e a
 matriz de correlação fica bem mais ruidosa. Optou-se por manter a janela de
 dois anos.
 
-## 3. Camada A — backbone kNN, k = 3
+## 3. Camada A — Jaccard ponderado e backbone kNN, k = 3
 
-Antes de calibrar, dois atributos saíram da camada.
+A Camada A passou por três decisões. A tabela
+`out/frente2/02_evolucao_camada_a.csv` separa o efeito de cada uma:
+
+| Configuração | Arestas | Densidade | Grau médio | Modularidade | ARI com segmento |
+|---|---|---|---|---|---|
+| 1. soma de idf, com `tipo_fundo` (original) | 433 | 0,418 | 18,8 | 0,486 | 0,488 |
+| 2. soma de idf, sem `tipo_fundo` | 233 | 0,225 | 10,1 | 0,555 | 0,857 |
+| 3. Jaccard, inquilino só tijolo (completa) | 233 | 0,225 | 10,1 | 0,474 | 0,428 |
+| 4. Jaccard + backbone k=3 (adotada) | 122 | 0,118 | 5,3 | 0,574 | 0,519 |
+
+### 3.1 Remoção do `tipo_fundo`
 
 `indexador` e `tipo_imovel` nunca foram coletados: estão como `n/a` nos 46
-fundos e não geram aresta nenhuma. `tipo_fundo` é pior, porque gerava aresta
+fundos e não geram aresta nenhuma. `tipo_fundo` era pior, porque gerava aresta
 sem carregar informação: ele é função determinística do segmento, então
 duplicava o peso do setor e ligava qualquer par de fundos de tijolo.
 **200 das 433 arestas existiam apenas por causa dele**, e 336 das 433 não
 diziam nada além do setor compartilhado.
 
-Efeito da remoção (`out/frente2/02_efeito_tipo_fundo.csv`):
+### 3.2 Inquilino só para fundos de tijolo
 
-| Configuração | Arestas | Densidade | Grau médio | Modularidade | ARI com segmento |
-|---|---|---|---|---|---|
-| com `tipo_fundo` | 433 | 0,418 | 18,8 | 0,486 | 0,488 |
-| sem `tipo_fundo` | 233 | 0,225 | 10,1 | 0,555 | 0,857 |
-| sem `tipo_fundo` + backbone k=3 | 98 | 0,095 | 4,3 | 0,656 | 0,452 |
+Fundo de papel, FoF e Fiagro não têm locatário. O que a planilha traz nesses
+casos é uma descrição do que o fundo carrega, genérica por segmento: a mesma
+lista de onze devedores de CRI aparece em 16 fundos de papel, a mesma lista de
+doze lojistas aparece em 8 fundos de shopping, e HFOF11 e KFOF11 trazem "cotas
+de outros FIIs listados na bolsa".
 
-O grafo perdeu 46% das arestas e ficou mais significativo: as comunidades do
-Louvain passaram a reconstruir os segmentos quase perfeitamente (ARI 0,857).
+Os nomes são reais e o dado não foi inventado; ele apenas não é específico por
+fundo. Usado como atributo, faria os fundos de papel compartilharem onze itens
+de uma vez, formando um clique de peso altíssimo que apenas repete o que o
+segmento já diz. O atributo passa a valer somente para os segmentos de tijolo,
+onde é de fato locatário. Após o filtro, 19 dos 46 fundos contribuem com
+inquilinos.
 
-**Por que não cortar por peso.** O peso de uma aresta que existe só por
-segmento compartilhado é `ln(N / tamanho do segmento)`. Papel tem 15 fundos e
-cada aresta interna pesa 1,12; Logística tem 7 e cada aresta pesa 1,88. Um
-limiar de 1,2 apaga o Papel inteiro e preserva a Logística inteira — não por
-serem mais ou menos parecidos, mas por serem grupos de tamanhos diferentes.
-Na prática o ARI despenca de 0,857 para 0,338. O corte por peso é enviesado
-contra os segmentos maiores, que são justamente os de maior risco de
-concentração.
+### 3.3 Peso: Jaccard ponderado pelo idf
 
-**O backbone kNN** troca a pergunta: em vez de "esta aresta é forte em termos
+A soma do idf tinha dois defeitos simultâneos.
+
+**Desequilíbrio entre segmentos.** Somar favorece quem tem mais atributos. O
+peso médio de uma aresta dentro da Logística era 2,57 contra 1,31 dentro do
+Papel: fundos de tijolo pareciam o dobro de similares entre si apenas porque
+tinham inquilinos para somar.
+
+**Resolução baixa.** O peso dependia só de *quais* atributos coincidiam, e com
+três atributos existem apenas 10 padrões de casamento possíveis na amostra. O
+grafo completo tinha 233 arestas e **22 valores distintos de peso**, sendo que
+136 delas (58%) existiam só por segmento compartilhado — e, dentro de um mesmo
+segmento, todas essas são obrigatoriamente idênticas. Os 15 fundos de Papel
+formavam um clique de 105 arestas, todas valendo exatamente 1,121. Foi esse
+empate em massa que tornava o backbone dependente da ordem das linhas da
+planilha, problema corrigido em `docs/frente2-backbone-empates.md`.
+
+Vale registrar que um peso fixo por atributo, escolhido à mão, pioraria o
+segundo defeito: o peso passaria a ser função apenas do padrão de casamento,
+limitando o grafo a 10 valores distintos.
+
+A correção é normalizar pela união, medindo que fração do perfil conjunto dos
+dois fundos é compartilhada:
+
+$$w_A(i,j) = \frac{\sum_{q \in A \cap B} \mathrm{idf}(q)}{\sum_{q \in A \cup B} \mathrm{idf}(q)}$$
+
+O peso fica em (0, 1], mantém a ponderação por raridade e passa a depender
+também do que cada fundo tem de diferente. O grafo completo vai de 22 para
+**114 valores distintos de peso**, e o backbone sai de 0,178 para 0,118 de
+densidade.
+
+Alternativas medidas na mesma base, todas com inquilino só para tijolo e
+backbone k = 3 com empates:
+
+| Método | Arestas | Pesos distintos | Densidade | intra Log × Papel | Razão | ARI |
+|---|---|---|---|---|---|---|
+| soma de idf | 184 | 28 | 0,178 | 2,572 × 1,309 | 1,96 | 0,469 |
+| **Jaccard ponderado** | **122** | **61** | **0,118** | 0,158 × 0,324 | 0,49 | 0,519 |
+| Gower simples | 203 | 12 | 0,196 | 0,413 × 0,538 | 0,77 | 0,690 |
+| Gower × raridade | 178 | 30 | 0,172 | 0,227 × 0,171 | 1,33 | 0,576 |
+
+A razão ideal entre os pesos médios intra-segmento é 1,00. O Gower simples
+equilibra melhor, mas ao custo de abandonar a ponderação por raridade: cai
+para 12 valores distintos de peso, o pior dos quatro, e deixa o grafo mais
+denso que a versão original. O Jaccard foi adotado por corrigir os dois
+defeitos de origem mantendo o idf, e o desequilíbrio residual está declarado
+nas limitações.
+
+### 3.4 Por que backbone e não limiar de peso
+
+O peso de uma aresta que existe só por segmento compartilhado é dominado por
+`ln(N / tamanho do segmento)`. Papel tem 15 fundos e Logística tem 7, de modo
+que um limiar de peso elimina primeiro os segmentos maiores — justamente os de
+maior risco de concentração.
+
+O backbone kNN troca a pergunta: em vez de "esta aresta é forte em termos
 absolutos?", pergunta "esta aresta está entre as k mais fortes deste fundo?".
-Cada fundo guarda as suas k ligações de maior peso e o grafo é a união dessas
-escolhas. A seleção passa a ser interna a cada fundo, portanto invariante ao
-tamanho do segmento, e nenhum fundo fica isolado. É a mesma mecânica da
-Camada C, o que permite descrever uma regra só para as duas.
+A seleção passa a ser interna a cada fundo, portanto invariante ao tamanho do
+segmento, e nenhum fundo fica isolado. Empates com a k-ésima aresta são
+mantidos, para que o resultado não dependa da ordem da planilha.
 
-Varredura (`out/frente2/03_sensibilidade_camada_a.csv`): k = 2 parte o grafo
-em 4 componentes, com 76% dos fundos no maior. A partir de k = 3 o grafo é
-conexo. Adotou-se k = 3, o menor valor conexo.
+### 3.5 Escolha de k
+
+Varredura em `out/frente2/03_sensibilidade_camada_a.csv`. Com o peso em
+Jaccard a Camada A já fica conexa em k = 2, de modo que a conectividade
+sozinha não decide. Adotou-se k = 3 por duas razões: é o menor valor que deixa
+as duas camadas kNN com grau médio acima de 3, alinhado à Camada B; e a
+modularidade da Camada A é máxima até k = 3 (0,574) e cai a partir de k = 4
+(0,527).
 
 ## 4. Camada B — MST ∪ ρ ≥ 0,32
 
@@ -158,7 +223,7 @@ redundante com a Camada A.
 
 | Camada | ARI com segmento | Leitura |
 |---|---|---|
-| A | 0,452 (0,857 no grafo completo) | reconstrói o setor, como esperado |
+| A | 0,519 | reconstrói parcialmente o setor, como esperado |
 | B | 0,210 | o co-movimento só em parte segue o setor |
 | C | 0,122 | perfil financeiro é quase ortogonal ao setor |
 
@@ -169,11 +234,16 @@ diferentes. Se uma delas fosse redundante, apareceria aqui.
 
 - Os cinco limiares são decisões de modelagem. A varredura em
   `out/frente2/` mostra como as métricas respondem a cada um.
+- **Viés de cobertura na Camada A.** O Jaccard divide pela união, então o
+  fundo sobre o qual temos mais informação tem mais oportunidade de divergir:
+  o peso médio dentro da Logística é 0,158 contra 0,324 dentro do Papel. A
+  comparação de pesos *entre* segmentos precisa levar isso em conta; dentro de
+  um mesmo segmento a comparação é válida.
 - A correlação é sensível à janela e a mudanças de regime. O período usado é
   2023–2024 e deve ser reportado junto com qualquer resultado.
 - Nove fundos ficaram fora por qualidade de dados, não por irrelevância.
-- A Camada A depende de `segmento`, `gestora` e `inquilinos`. A lista de
-  inquilinos está vazia em 21 dos 46 fundos, e listas repetidas em mais de
-  quatro fundos são ignoradas por serem preenchimento padrão.
+- A Camada A depende de `segmento`, `gestora` e `inquilinos`. O atributo
+  inquilino vale só para os segmentos de tijolo e contribui em 19 dos 46
+  fundos.
 - A presença de aresta na Camada B não implica correlação alta, por causa das
   arestas da MST.

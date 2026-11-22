@@ -72,6 +72,10 @@ ATRIBUTOS_A = ["segmento", "gestora"]
 REPETICAO_MAX = 4
 CORRECOES_INQ = {"petrobas": "petrobras", "carregour": "carrefour"}
 
+# Segmentos de tijolo: os unicos em que o atributo `inquilino` faz sentido.
+TIJOLO = {"Logística", "Shoppings", "Lajes", "Renda Urbana", "Híbrido",
+          "Desenvolvimento"}
+
 PALETA = {"Logística": "#2563eb", "Shoppings": "#db2777", "Lajes": "#059669",
           "Papel": "#d97706", "Renda Urbana": "#7c3aed", "FoF": "#0891b2",
           "Híbrido": "#64748b", "Fiagro": "#65a30d", "Desenvolvimento": "#92400e"}
@@ -183,7 +187,17 @@ def carregar_dados(verbose=True):
 
 # -------------------------------------------------------------- camada A
 def itens_de(atrib):
-    """Cada fundo vira um conjunto de itens 'atributo=valor'."""
+    """
+    Cada fundo vira um conjunto de itens 'atributo=valor'.
+
+    O item `inquilino` so entra para fundos de tijolo. Fundo de papel, FoF e
+    Fiagro nao tem locatario, e o que a planilha traz nesses casos e uma
+    descricao do que o fundo carrega -- os devedores dos CRI, "cotas de
+    outros FIIs listados na bolsa", "CRAs de produtores rurais" --, generica
+    por segmento e nao especifica por fundo. Usada como atributo, ela faria
+    os fundos de papel compartilharem os mesmos onze itens, formando um
+    clique de peso altissimo que apenas repete o que o segmento ja diz.
+    """
     I = {}
     for t in atrib.index:
         s = set()
@@ -191,8 +205,9 @@ def itens_de(atrib):
             v = str(atrib.loc[t, col]).strip()
             if v and v.lower() != "n/a":
                 s.add(f"{col}={v}")
-        for q in atrib.loc[t, "inquilinos"]:
-            s.add(f"inquilino={q}")
+        if atrib.loc[t, "segmento"] in TIJOLO:
+            for q in atrib.loc[t, "inquilinos"]:
+                s.add(f"inquilino={q}")
         I[t] = s
     return I
 
@@ -200,8 +215,28 @@ def itens_de(atrib):
 def grafo_estrutural(atrib):
     """
     Projecao bipartida FII x caracteristica, valorada por raridade.
-    Peso da aresta = soma do idf dos itens compartilhados,
-    com idf(item) = ln(N / nº de fundos que tem o item).
+
+    Peso = Jaccard ponderado pelo idf, isto e, a fracao do perfil conjunto
+    dos dois fundos que eles compartilham:
+
+        w(i,j) = (soma do idf dos itens em comum)
+                 / (soma do idf dos itens da uniao),
+
+    com idf(item) = ln(N / nº de fundos que tem o item). O peso fica em (0,1].
+
+    Por que nao a soma simples do idf, que era a versao anterior. Somar
+    favorece quem tem mais atributos: o peso medio de uma aresta dentro da
+    Logistica era 2,57 contra 1,31 dentro do Papel, porque fundo de tijolo
+    tem inquilino para somar e fundo de papel nao. A soma tambem depende so
+    de QUAIS atributos coincidem, e com tres atributos ha poucos padroes
+    possiveis -- o grafo tinha 233 arestas e apenas 22 valores distintos de
+    peso, com 58% delas empatadas por compartilharem somente o segmento.
+    O denominador resolve as duas coisas, porque passa a depender tambem do
+    que cada fundo tem de diferente.
+
+    Custo, declarado nas limitacoes: fundo sobre o qual temos mais
+    informacao tem mais oportunidade de divergir, entao os pesos dentro dos
+    segmentos de tijolo ficam sistematicamente menores que os de papel.
     """
     N = len(atrib)
     I = itens_de(atrib)
@@ -214,7 +249,10 @@ def grafo_estrutural(atrib):
         comuns = I[a] & I[b]
         if not comuns:
             continue
-        peso = sum(idf[it] for it in comuns)
+        uniao = sum(idf[it] for it in I[a] | I[b])
+        if uniao <= 0:
+            continue
+        peso = sum(idf[it] for it in comuns) / uniao
         if peso > 0:
             G.add_edge(a, b, weight=peso, itens=len(comuns))
     return G

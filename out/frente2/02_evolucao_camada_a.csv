@@ -1,0 +1,5 @@
+configuracao,arestas,densidade,grau_medio,componentes,isolados,maior_componente_pct,comunidades,modularidade,ari_segmento
+"1. soma de idf, com tipo_fundo (original)",433,0.418,18.8,1,0,100,4,0.486,0.488
+"2. soma de idf, sem tipo_fundo",233,0.225,10.1,1,0,100,6,0.555,0.857
+"3. Jaccard, inquilino só tijolo (completa)",233,0.225,10.1,1,0,100,4,0.474,0.428
+4. Jaccard + backbone k=3 (adotada),122,0.118,5.3,1,0,100,6,0.574,0.519
