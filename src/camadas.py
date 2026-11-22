@@ -20,13 +20,16 @@ O que mudou em relacao a versao do frente4.py:
             segmento (todo segmento mapeava para um unico tipo), entao
             duplicava o peso do setor e ligava qualquer par de fundos de
             tijolo: 200 das 433 arestas existiam so por causa dele.
-            O corte por peso tambem saiu, porque o peso de uma aresta que
-            existe so por segmento e ln(N / tamanho do segmento): um limiar
-            apaga primeiro os segmentos maiores, que sao justamente os de
-            maior risco de concentracao. No lugar entrou o backbone kNN,
-            em que cada fundo guarda as suas k arestas mais fortes --
+            Inquilino so conta para fundos de tijolo (em Papel, FoF e
+            Fiagro o campo descreve o lastro, nao locatarios).
+            O peso passou da soma do idf para o Jaccard ponderado pelo idf
+            (fracao do perfil compartilhada, entre 0 e 1): a soma favorecia
+            quem tem mais atributos e empatava quase tudo.
+            O corte por peso saiu, porque apaga primeiro os segmentos
+            maiores, que sao justamente os de maior risco de concentracao.
+            No lugar entrou o backbone kNN, em que cada fundo guarda as suas
+            k arestas mais fortes (e as que empatam com a k-esima) --
             invariante ao tamanho do grupo e a mesma regra da Camada C.
-            k = 3: o menor valor que mantem A e C conexas.
 
   Camada B  o grafo analisado passa a ser a uniao da MST com o grafo por
             limiar, em vez do grafo por limiar sozinho. Com ρ ≥ 0,30 havia
@@ -66,9 +69,15 @@ ARQ_ATRIB = os.path.join(PASTA_DADOS, "atributos_fiis_v2.xlsx")
 # `indexador` e `tipo_imovel` nunca foram coletados.
 ATRIBUTOS_A = ["segmento", "gestora"]
 
-# A mesma lista de inquilinos aparece copiada em varios fundos de papel:
-# e preenchimento padrao, nao informacao. Listas repetidas em mais de
-# REPETICAO_MAX fundos sao ignoradas. (Criterio herdado do frente4.py.)
+# Inquilino so existe em fundo de tijolo. Em Papel, FoF e Fiagro a planilha
+# traz uma descricao do lastro ("cotas de outros FIIs...", "CRAs de
+# produtores rurais..."), que o split por virgula quebraria em itens falsos.
+SEGMENTOS_COM_INQUILINO = {"Logística", "Shoppings", "Lajes", "Renda Urbana",
+                           "Híbrido"}
+
+# A mesma lista de inquilinos aparece copiada em varios fundos do mesmo
+# segmento (ex.: 8 shoppings): e generica, nao especifica do fundo. Listas
+# repetidas em mais de REPETICAO_MAX fundos sao ignoradas.
 REPETICAO_MAX = 4
 CORRECOES_INQ = {"petrobas": "petrobras", "carregour": "carrefour"}
 
@@ -155,8 +164,10 @@ def carregar_atributos(tickers):
 
     texto = A["inquilinos"].fillna("").str.strip().str.lower()
     repeticoes = texto.map(texto.value_counts())
+    tem_inquilino = atrib["segmento"].isin(SEGMENTOS_COM_INQUILINO)
     atrib["inquilinos"] = [
-        [] if txt == "" or repeticoes[t] > REPETICAO_MAX else _separa_inquilinos(txt)
+        _separa_inquilinos(txt)
+        if tem_inquilino[t] and txt and repeticoes[t] <= REPETICAO_MAX else []
         for t, txt in texto.items()]
 
     cont = pd.DataFrame(index=C.index)
@@ -197,11 +208,17 @@ def itens_de(atrib):
     return I
 
 
-def grafo_estrutural(atrib):
+def grafo_estrutural(atrib, peso="jaccard"):
     """
-    Projecao bipartida FII x caracteristica, valorada por raridade.
-    Peso da aresta = soma do idf dos itens compartilhados,
+    Projecao bipartida FII x caracteristica, valorada por raridade,
     com idf(item) = ln(N / nº de fundos que tem o item).
+
+    peso="jaccard" (padrao): Jaccard ponderado pelo idf,
+        w = soma idf(itens em comum) / soma idf(itens da uniao), entre 0 e 1.
+        E a fracao do perfil dos dois fundos que e compartilhada.
+    peso="soma": soma do idf dos itens em comum (versao anterior, mantida
+        so para comparacao). Favorecia quem tem mais atributos e gerava
+        muitos empates, porque so dependia de QUAIS itens coincidem.
     """
     N = len(atrib)
     I = itens_de(atrib)
@@ -214,9 +231,11 @@ def grafo_estrutural(atrib):
         comuns = I[a] & I[b]
         if not comuns:
             continue
-        peso = sum(idf[it] for it in comuns)
-        if peso > 0:
-            G.add_edge(a, b, weight=peso, itens=len(comuns))
+        w = sum(idf[it] for it in comuns)
+        if peso == "jaccard":
+            w /= sum(idf[it] for it in I[a] | I[b])
+        if w > 0:
+            G.add_edge(a, b, weight=w, itens=len(comuns))
     return G
 
 

@@ -1,8 +1,8 @@
-configuracao,arestas,densidade,grau_medio,componentes,isolados,maior_componente_pct,comunidades,modularidade,ari_segmento
-completa (sem backbone),233,0.225,10.1,1,0,100,6,0.555,0.857
-k = 2,148,0.143,6.4,2,0,93,6,0.639,0.626
-k = 3,191,0.185,8.3,1,0,100,6,0.6,0.857
-k = 4,206,0.199,9.0,1,0,100,6,0.561,0.857
-k = 5,225,0.217,9.8,1,0,100,6,0.558,0.857
-k = 6,229,0.221,10.0,1,0,100,6,0.561,0.857
-k = 8,231,0.223,10.0,1,0,100,6,0.554,0.857
+configuracao,arestas,pesos_distintos,densidade,grau_medio,componentes,isolados,maior_componente_pct,comunidades,modularidade,ari_segmento
+completa (sem backbone),233,114,0.225,10.1,1,0,100,4,0.474,0.428
+k = 2,109,48,0.105,4.7,1,0,100,5,0.574,0.46
+k = 3,122,61,0.118,5.3,1,0,100,6,0.574,0.519
+k = 4,144,73,0.139,6.3,1,0,100,5,0.527,0.408
+k = 5,177,89,0.171,7.7,1,0,100,4,0.49,0.458
+k = 6,193,98,0.186,8.4,1,0,100,4,0.478,0.405
+k = 8,214,110,0.207,9.3,1,0,100,4,0.477,0.458

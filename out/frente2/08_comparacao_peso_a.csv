@@ -1,0 +1,5 @@
+configuracao,arestas,pesos_distintos,densidade,grau_medio,componentes,isolados,maior_componente_pct,comunidades,modularidade,ari_segmento,vies_cobertura,razao_intra_log_papel
+soma do idf,191,20,0.185,8.3,1,0,100,5,0.549,0.646,0.73,3.63
+Jaccard ponderado,122,114,0.118,5.3,1,0,100,6,0.574,0.519,-0.72,0.49
+cosseno (TF-IDF),118,115,0.114,5.1,1,0,100,5,0.598,0.297,-0.58,0.75
+Gower,203,15,0.196,8.8,1,0,100,4,0.42,0.69,-0.88,0.77
