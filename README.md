@@ -33,7 +33,7 @@ python src/frente4.py      # pontes, segmentos e carteiras   -> out/frente4/todo
 | Camada B | correlação → distância de Mantegna → MST (Kruskal) ∪ limiar ρ ≥ 0,32 | `src/grafos.py`, `src/camadas.py` |
 | Camada C | z-score → distância euclidiana → kNN (k = 3) | `src/grafos.py`, `src/camadas.py` |
 | Comunidades | Girvan-Newman, Louvain e Leiden, **implementados do zero** | `src/comunidades.py` |
-| Comunidades (Tabela 1) | Louvain via biblioteca `python-louvain` | `src/grafos.py` |
+| Comunidades (Seção 3.2.4) | Louvain via biblioteca `python-louvain` | `src/grafos.py` |
 | Centralidades e pontes | grau ponderado, intermediação, autovetor | `src/grafos.py`, `src/frente4.py` |
 | Carteiras e robustez | caminho mínimo na MST, remoção de vértices | `src/grafos.py`, `src/frente4.py` |
 
