@@ -27,4 +27,4 @@ hotfix/*   ──PR────────────────────�
 
 ## Regras
 - Não suba CSVs grandes de dados (`dados/*.csv` está no `.gitignore`).
-- Rode `python src/main.py` antes de abrir o PR, para garantir que o pipeline não quebrou.
+- Rode o script que você alterou (`python src/frente2.py`, `comunidades.py` ou `frente4.py`) antes de abrir o PR, para garantir que o pipeline não quebrou. O `main.py` é só o protótipo com dados simulados e não testa o pipeline real.

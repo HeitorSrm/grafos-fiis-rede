@@ -1,3 +1,7 @@
+# PSEUDOCÓDIGO DE ESTUDO — Leiden. NÃO é executado pelo projeto.
+# A implementação que roda está em src/comunidades.py (e, para a Tabela 1 do
+# relatório, em src/grafos.py via python-louvain). Ver src/README.md.
+#
 #Pseudocodigo de Leiden
 
 # função leiden(Grafo G):

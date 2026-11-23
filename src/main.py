@@ -1,4 +1,9 @@
 """
+PROTÓTIPO INICIAL (dados simulados) — NÃO é o pipeline final do relatório.
+Mantido como demonstração e como teste rápido de que grafos.py roda.
+Os parâmetros daqui (limiar 0,5; k = 4) NÃO são os calibrados (ver camadas.py).
+O pipeline real é: frente2.py -> comunidades.py -> frente4.py.
+
 Protótipo FIIs-como-rede — 3 camadas valoradas + comparação de carteiras.
 Pipeline no estilo CRISP-NET: dados → modelagem → avaliação → figuras.
 """
