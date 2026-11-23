@@ -1,3 +1,7 @@
+# PSEUDOCÓDIGO DE ESTUDO — Girvan-Newman. NÃO é executado pelo projeto.
+# A implementação que roda está em src/comunidades.py (e, para a Tabela 1 do
+# relatório, em src/grafos.py via python-louvain). Ver src/README.md.
+#
 # função girvanNewman(Grafo G):
 #     enquanto quantidade_componentes_conectados(G) == 1, faça
 #         # Calcula a centralidade de intermediação (edge betweenness) de todas as arestas

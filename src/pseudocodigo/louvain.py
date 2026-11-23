@@ -1,3 +1,7 @@
+# PSEUDOCÓDIGO DE ESTUDO — Louvain. NÃO é executado pelo projeto.
+# A implementação que roda está em src/comunidades.py (e, para a Tabela 1 do
+# relatório, em src/grafos.py via python-louvain). Ver src/README.md.
+#
 #Pseudocodigo
 
 # função moverNós(Grafo G, Partição P):
