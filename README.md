@@ -5,7 +5,41 @@ Imobiliário como uma rede e analisa similaridade e dependência sob três
 perspectivas, para responder à pergunta do cenário: *onde a diversificação
 aparente de uma carteira esconde dependência real?*
 
-Amostra: 46 FIIs, 497 pregões (02/01/2023 a 30/12/2024), dados reais da B3.
+Amostra: 46 FIIs, 499 datas de negociação (02/01/2023 a 30/12/2024), que
+dão 497 observações de retorno; dados reais da B3.
+
+## Comece por aqui
+
+1. **Relatório e slides** são a descrição completa do trabalho (o texto final está no relatório entregue).
+2. Para **reproduzir** os resultados, nesta ordem, da raiz do repositório:
+
+```bash
+pip install -r requirements.txt
+python src/frente2.py      # limiares + camadas calibradas   -> out/frente2/
+python src/comunidades.py  # comunidades (3 algoritmos)      -> out/comunidades/
+python src/frente4.py      # pontes, segmentos e carteiras   -> out/frente4/todos/
+```
+
+3. **O que é código final, validação, protótipo e pseudocódigo** está em
+   [`src/README.md`](src/README.md). Em resumo: `grafos.py` e `camadas.py` são
+   o núcleo; `main.py` e `data.py` são do protótipo com dados simulados;
+   `src/pseudocodigo/` é só material de estudo.
+
+## Quais algoritmos rodam de verdade
+
+| Etapa | Algoritmo | Onde está o código que roda |
+|---|---|---|
+| Camada A | projeção bipartida, Jaccard ponderado por `idf`, *backbone* por vizinhança (k = 3, mantendo empates) | `src/grafos.py`, `src/camadas.py` |
+| Camada B | correlação → distância de Mantegna → MST (Kruskal) ∪ limiar ρ ≥ 0,32 | `src/grafos.py`, `src/camadas.py` |
+| Camada C | z-score → distância euclidiana → kNN (k = 3) | `src/grafos.py`, `src/camadas.py` |
+| Comunidades | Girvan-Newman, Louvain e Leiden, **implementados do zero** | `src/comunidades.py` |
+| Comunidades (Tabela 1) | Louvain via biblioteca `python-louvain` | `src/grafos.py` |
+| Centralidades e pontes | grau ponderado, intermediação, autovetor | `src/grafos.py`, `src/frente4.py` |
+| Carteiras e robustez | caminho mínimo na MST, remoção de vértices | `src/grafos.py`, `src/frente4.py` |
+
+Os arquivos de `src/pseudocodigo/` (Louvain, Leiden e Girvan-Newman) são
+pseudocódigo de estudo e **não são executados**. Há duas implementações de
+Louvain de propósito (a da Tabela 1 e a das comparações); ver `src/README.md`.
 
 ## As três camadas
 
@@ -66,7 +100,7 @@ pip install -r requirements.txt
 python src/frente2.py      # sensibilidade dos limiares + camadas calibradas
 python src/comunidades.py  # comunidades nas 3 camadas (3 algoritmos)
 python src/frente4.py      # centralidades, pontes, segmentos e carteiras
-python src/main.py         # protótipo inicial, com dados simulados
+python src/main.py         # PROTÓTIPO inicial, com dados simulados (não é o resultado final)
 
 # validação
 python src/teste_sintetico.py   # 500 fundos sintéticos de estrutura conhecida
@@ -88,6 +122,7 @@ A base de atributos usada pela Frente 2 é gerada por
 - `Tabelas - Dados/atributos_fiis.xlsx` — atributos como coletados (v1)
 - `Tabelas - Dados/atributos_fiis_v2.xlsx` — v2, com o `segmento` reclassificado
 - `Dicionário/dicionario.md` e `Dicionário/dicionario_v2.md`
+- `src/` — scripts da coleta original (atributos e preços)
 
 ### Dados ampliados — `dados/ampliado/`
 - `universo.csv` — os 379 FIIs negociados, com segmento (e a origem dele:
@@ -114,8 +149,8 @@ A base de atributos usada pela Frente 2 é gerada por
   segmento e entre camadas → `out/comunidades/`
 - `visual_comunidades.py` — **Frente 3**: comparação visual das partições
   (`--salvar` grava os PNGs sem abrir janela)
-- `louvain.py`, `leiden.py`, `girvan-newmann.py` — **Frente 3**:
-  pseudocódigo comentado dos três algoritmos
+- `pseudocodigo/` (`louvain.py`, `leiden.py`, `girvan_newman.py`) —
+  **só pseudocódigo comentado**, material de estudo; não é executado
 - `teste_sintetico.py` — **validação**: 500 fundos sintéticos com segmentos,
   pontes, pares de diversificação aparente e perfis plantados; verifica se o
   pipeline os recupera, em três cenários (forte, realista e com mudança de
@@ -126,15 +161,18 @@ A base de atributos usada pela Frente 2 é gerada por
   cruzados e carteiras na base ampliada, lado a lado com a base de 46 →
   `out/ampliada/`
 - `gera_base_v2.py` — gera `atributos_fiis_v2.xlsx`
-- `data.py`, `main.py` — protótipo inicial com dados simulados
+- `data.py`, `main.py` — protótipo inicial com dados simulados (o `frente4.py`
+  ainda importa o `data.py` para as carteiras de exemplo)
+- Detalhe de cada arquivo: [`src/README.md`](src/README.md)
 
 ### Documentação — `docs/`
 - `frente2-thresholds.md` — calibragem dos limiares, tabelas da varredura e
   limitações a declarar (números em `out/frente2/09_diagnostico_limitacoes.csv`)
 - `frente2-camada-a.md` — decisões da Camada A (inquilinos, peso Jaccard,
   backbone com empates), com os testes de cada uma
-- `frente2-modelagem.tex` — seção de Modelagem em LaTeX, pronta para o Overleaf
-- `cronograma-frente2.md`, `roteiro.md`
+- `frente2-modelagem.tex` — rascunho longo da Modelagem (o texto final está no relatório)
+- `planejamento/` — `cronograma-frente2.md` e `roteiro.md` (organização interna do grupo)
+- Índice da pasta: [`docs/README.md`](docs/README.md); das saídas: [`out/README.md`](out/README.md)
 
 ## Algoritmos de teoria dos grafos usados
 
